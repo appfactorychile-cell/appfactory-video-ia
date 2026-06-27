@@ -63,3 +63,16 @@ http://127.0.0.1:5501/#mvp-workflow
 
 Este prototipo no debe copiar contenido, no debe manipular algoritmos, no debe generar vistas falsas y no debe publicar en plataformas externas.
 
+
+## FASE 4.0 - AI Agents Platform
+
+El prototipo incluye una nueva categoria `AGENTES IA` con pantallas para:
+
+- Director General IA.
+- Agentes IA.
+- Estado de Agentes.
+- Timeline IA.
+- Especialidades.
+- Rendimiento.
+
+Estas pantallas consumen los endpoints mock del backend local bajo `/api/agents`. No conectan modelos reales, APIs externas, audio, video, imagenes ni publicacion automatica.

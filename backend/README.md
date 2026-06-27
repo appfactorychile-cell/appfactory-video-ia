@@ -35,8 +35,7 @@ http://127.0.0.1:8000/docs
 - `POST /api/editorial/recommend` - return a mock editorial recommendation.
 - `POST /api/content/idea` - generate a mock content idea.
 - `POST /api/content/script` - generate a mock 20 to 45 second script.
-- `GET /api/pipeline` - list simulated pipeline runs.
-- `POST /api/pipeline/start` - simulate the production pipeline.`r`n- `POST /api/content-brain/analyze` - transform an opportunity into a complete mock editorial strategy.`r`n- `POST /api/content-brain/recommend` - explain why the selected idea is best and how it should be produced.`r`n- `POST /api/content-brain/storyboard` - generate a mock storyboard, narration, subtitles and CTA.`r`n- `POST /api/content-brain/production-plan` - return the mock narrator, visual style, camera, music, platforms and duration.
+- `GET /api/pipeline` - list simulated pipeline runs.`r`n- `POST /api/pipeline/start` - simulate the production pipeline.`r`n- `POST /api/content-brain/analyze` - transform an opportunity into a complete mock editorial strategy.`r`n- `POST /api/content-brain/recommend` - explain why the selected idea is best and how it should be produced.`r`n- `POST /api/content-brain/storyboard` - generate a mock storyboard, narration, subtitles and CTA.`r`n- `POST /api/content-brain/production-plan` - return the mock narrator, visual style, camera, music, platforms and duration.
 
 ## Simulated Pipeline
 
@@ -85,3 +84,14 @@ The first complete user flow is exposed under the `Workflow` Swagger tag:
 - `POST /api/workflow/generate-production-plan` - generate the mock production plan.
 - `POST /api/workflow/ready-to-generate` - mark the workflow ready without generating video.
 - `GET /api/workflow/{workflow_id}` - inspect temporary workflow state.
+
+## AI Agents Platform Routes
+
+The mock AI company is exposed under the `AI Agents Platform` Swagger tag:
+
+- `GET /api/agents` - list the Director General IA and all specialized agents.
+- `GET /api/agents/status` - show availability, average time and simulated load.
+- `POST /api/agents/simulate` - simulate a coordinated mission from Director IA to final result.
+- `GET /api/agents/{agent_name}` - inspect one agent by slug or name.
+
+The module is mock-only. It does not call OpenAI, Gemini, external APIs, video generators, audio providers or publishing services.
