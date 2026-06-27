@@ -70,3 +70,18 @@ This MVP base must remain responsible and mock-only:
 - No real credentials in the repository.
 - No external API calls.
 
+
+## MVP Workflow Routes
+
+The first complete user flow is exposed under the `Workflow` Swagger tag:
+
+- `POST /api/workflow/create-channel` - create a temporary channel workflow.
+- `POST /api/workflow/analyze-opportunity` - analyze the saved channel opportunity.
+- `POST /api/workflow/generate-ideas` - generate 10 mock editorial ideas.
+- `POST /api/workflow/choose-idea` - save the selected idea in workflow state.
+- `POST /api/workflow/generate-hooks` - generate 5 hook options.
+- `POST /api/workflow/choose-hook` - save the selected hook in workflow state.
+- `POST /api/workflow/generate-story` - generate story strategy and a 4-scene storyboard.
+- `POST /api/workflow/generate-production-plan` - generate the mock production plan.
+- `POST /api/workflow/ready-to-generate` - mark the workflow ready without generating video.
+- `GET /api/workflow/{workflow_id}` - inspect temporary workflow state.

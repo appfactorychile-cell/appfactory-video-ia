@@ -1,6 +1,7 @@
 ﻿const screens = [
   { id: "login", label: "Login", icon: "IN", kpi: "Access" },
   { id: "dashboard", label: "Global Command Center", icon: "GC", kpi: "Live" },
+  { id: "mvp-workflow", label: "MVP Workflow", icon: "WF", kpi: "Flow" },
   { id: "intelligence", label: "Centro de Inteligencia Global", icon: "IG", kpi: "392" },
   { id: "global-intelligence", label: "Global Intelligence Engine", icon: "GIE", kpi: "Brain" },
   { id: "digital-factory", label: "Digital Content Factory", icon: "DF", kpi: "24/7" },
@@ -922,6 +923,160 @@ function monetization() { return `${metricCards()}${table(["Canal", "Pais", "Vie
 function costs() { return table(["Centro de costo", "Costo diario", "Peso", "Estado"], costRows.map(r => [r[0], r[1], r[2], badge(r[3], toneFor(r[3]))])) + barChart("Costos operacionales semanales"); }
 function settings() { return `<article class="card"><h3>Configuracion</h3><div class="form-grid">${["Zona horaria matriz", "Modo revision", "Auto publish", "Proveedor IA", "Storage", "Compliance", "Rate limits", "Observabilidad"].map(x => `<div class="field"><label>${x}</label><input readonly value="Configurable en fase futura" /></div>`).join("")}</div></article>`; }
 function company() { return `<div class="grid two"><article class="card"><span class="eyebrow">Empresa matriz</span><h3>AppFactoryChile</h3><p>appfactorychile@gmail.com</p><p class="muted">Perfil empresarial preparado para multi-organizacion, permisos, facturacion, auditoria y gobierno operacional global.</p></article>${statusPanel("Gobierno operativo")}</div>`; }
+var WORKFLOW_API_BASE = "http://127.0.0.1:8000";
+var workflowState = {
+  status: "idle",
+  error: "",
+  workflowId: "",
+  channel: null,
+  opportunity: null,
+  ideas: [],
+  selectedIdea: null,
+  hooks: [],
+  selectedHook: null,
+  story: null,
+  productionPlan: null,
+  ready: null,
+  progress: {}
+};
+
+function workflowPost(path, body) {
+  return fetch(`${WORKFLOW_API_BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body)
+  }).then(response => {
+    if (!response.ok) throw new Error(`Workflow backend ${response.status} at ${path}`);
+    return response.json();
+  });
+}
+
+function syncWorkflowBase(response) {
+  workflowState.workflowId = response.workflow_id || workflowState.workflowId;
+  workflowState.progress = response.progress || workflowState.progress;
+  workflowState.status = "ready";
+  workflowState.error = "";
+}
+
+function workflowPayloadFromForm() {
+  const get = id => document.getElementById(id)?.value.trim() || "";
+  const mode = document.querySelector('input[name="workflowMode"]:checked')?.value || "manual";
+  return {
+    name: get("wfName"),
+    country: get("wfCountry"),
+    language: get("wfLanguage"),
+    niche: get("wfNiche"),
+    description: get("wfDescription"),
+    daily_video_count: Number(get("wfDailyVideos") || 8),
+    platforms: get("wfPlatforms").split(",").map(item => item.trim()).filter(Boolean),
+    mode
+  };
+}
+
+async function runWorkflowAction(action, payload = {}) {
+  try {
+    workflowState.status = "loading";
+    workflowState.error = "";
+    renderScreen("mvp-workflow");
+    let response;
+    if (action === "create-channel") {
+      response = await workflowPost("/api/workflow/create-channel", workflowPayloadFromForm());
+      syncWorkflowBase(response);
+      workflowState.channel = response.channel;
+    }
+    if (action === "analyze-opportunity") {
+      response = await workflowPost("/api/workflow/analyze-opportunity", { workflow_id: workflowState.workflowId });
+      syncWorkflowBase(response);
+      workflowState.opportunity = response;
+    }
+    if (action === "generate-ideas") {
+      response = await workflowPost("/api/workflow/generate-ideas", { workflow_id: workflowState.workflowId });
+      syncWorkflowBase(response);
+      workflowState.ideas = response.ideas;
+    }
+    if (action === "choose-idea") {
+      response = await workflowPost("/api/workflow/choose-idea", { workflow_id: workflowState.workflowId, idea_id: payload.ideaId });
+      syncWorkflowBase(response);
+      workflowState.selectedIdea = response.selected_idea;
+    }
+    if (action === "generate-hooks") {
+      response = await workflowPost("/api/workflow/generate-hooks", { workflow_id: workflowState.workflowId });
+      syncWorkflowBase(response);
+      workflowState.hooks = response.hooks;
+    }
+    if (action === "choose-hook") {
+      response = await workflowPost("/api/workflow/choose-hook", { workflow_id: workflowState.workflowId, hook_id: payload.hookId });
+      syncWorkflowBase(response);
+      workflowState.selectedHook = response.selected_hook;
+    }
+    if (action === "generate-story") {
+      response = await workflowPost("/api/workflow/generate-story", { workflow_id: workflowState.workflowId });
+      syncWorkflowBase(response);
+      workflowState.story = response;
+    }
+    if (action === "generate-production-plan") {
+      response = await workflowPost("/api/workflow/generate-production-plan", { workflow_id: workflowState.workflowId });
+      syncWorkflowBase(response);
+      workflowState.productionPlan = response;
+    }
+    if (action === "ready-to-generate") {
+      response = await workflowPost("/api/workflow/ready-to-generate", { workflow_id: workflowState.workflowId });
+      syncWorkflowBase(response);
+      workflowState.ready = response;
+    }
+    renderScreen("mvp-workflow");
+  } catch (error) {
+    workflowState.status = "error";
+    workflowState.error = error.message;
+    renderScreen("mvp-workflow");
+  }
+}
+
+function workflowProgressBar() {
+  const steps = [["channel", "Canal"], ["opportunity", "Oportunidad"], ["ideas", "Ideas"], ["idea_selected", "Idea"], ["hooks", "Hook"], ["storyboard", "Storyboard"], ["production", "Produccion"], ["ready", "Listo"]];
+  return `<article class="card workflow-progress"><span class="eyebrow">First Complete User Flow</span><h3>Canal -> Oportunidad -> Ideas -> Hook -> Storyboard -> Produccion -> Listo</h3><div class="workflow-steps">${steps.map(([key, label]) => `<span class="${workflowState.progress[key] ? "done" : ""}">${label} ${workflowState.progress[key] ? "OK" : ""}</span>`).join("")}</div>${workflowState.error ? `<p class="muted workflow-error">${workflowState.error}</p>` : ""}</article>`;
+}
+
+function workflowChannelForm() {
+  return `<article class="card"><span class="eyebrow">Paso 1</span><h3>Crear Canal</h3><div class="form-grid"><div class="field"><label>Nombre</label><input id="wfName" value="Futuro Latino IA" /></div><div class="field"><label>Pais</label><input id="wfCountry" value="Mexico" /></div><div class="field"><label>Idioma</label><input id="wfLanguage" value="Spanish" /></div><div class="field"><label>Nicho</label><input id="wfNiche" value="Technology" /></div><div class="field"><label>Videos diarios</label><input id="wfDailyVideos" type="number" value="8" min="1" max="50" /></div><div class="field"><label>Plataformas</label><input id="wfPlatforms" value="YouTube Shorts, Instagram Reels, TikTok" /></div><div class="field workflow-span"><label>Descripcion</label><input id="wfDescription" value="AI tools for small businesses" /></div><div class="field"><label>Modo</label><div class="mode-toggle"><label><input type="radio" name="workflowMode" value="automatic" /> Automatico</label><label><input type="radio" name="workflowMode" value="manual" checked /> Manual</label></div></div></div><button class="primary-btn" type="button" data-workflow-action="create-channel">Guardar canal</button></article>`;
+}
+
+function workflowOpportunityPanel() {
+  if (!workflowState.channel) return "";
+  const op = workflowState.opportunity;
+  return `<article class="card"><span class="eyebrow">Paso 2</span><h3>Analizar Oportunidades</h3>${op ? `<div class="grid metrics"><article class="metric-card"><small>Opportunity Score</small><span class="metric-value">${op.opportunity_score}</span><span class="delta">${op.potential}</span></article><article class="metric-card"><small>Competencia</small><span class="metric-value">${op.competition}</span><span class="delta">Mercado</span></article><article class="metric-card"><small>Monetizacion</small><span class="metric-value">${op.monetization}</span><span class="delta">Potencial</span></article><article class="metric-card"><small>Horario ideal</small><span class="metric-value">${op.ideal_time}</span><span class="delta">Local</span></article></div><p class="muted">${op.trend}</p>` : `<p class="muted">El Content Brain analizara el canal guardado y devolvera un score mock realista.</p>`}<button class="primary-btn" type="button" data-workflow-action="analyze-opportunity">Analizar oportunidad</button></article>`;
+}
+
+function workflowIdeasPanel() {
+  if (!workflowState.opportunity) return "";
+  return `<article class="card"><span class="eyebrow">Paso 3 y 4</span><h3>Generar Ideas y elegir una</h3>${workflowState.ideas.length ? `<div class="workflow-idea-grid">${workflowState.ideas.map(idea => `<article class="workflow-choice ${workflowState.selectedIdea?.id === idea.id ? "selected" : ""}"><strong>${idea.title}</strong><p>${idea.value}</p><div class="style-meta"><span>Curiosidad ${idea.curiosity}</span><span>${idea.emotion}</span><span>Viral ${idea.viral_level}</span><span>Monetizacion ${idea.monetization}</span><span>Retencion ${idea.retention}</span></div><button class="ghost-btn" type="button" data-workflow-action="choose-idea" data-idea-id="${idea.id}">Elegir idea</button></article>`).join("")}</div>` : `<p class="muted">Genera 10 ideas desde el backend y luego selecciona una para continuar.</p>`}<button class="primary-btn" type="button" data-workflow-action="generate-ideas">Generar 10 ideas</button></article>`;
+}
+
+function workflowHooksPanel() {
+  if (!workflowState.selectedIdea) return "";
+  return `<article class="card"><span class="eyebrow">Paso 5</span><h3>Generar Hook</h3>${workflowState.hooks.length ? `<div class="hook-stack">${workflowState.hooks.map(hook => `<div class="hook-card ${workflowState.selectedHook?.id === hook.id ? "selected" : ""}"><strong>${hook.hook}</strong><span>${hook.score}/100</span><small>${hook.emotion} · ${hook.retention}</small><button class="ghost-btn" type="button" data-workflow-action="choose-hook" data-hook-id="${hook.id}">Seleccionar hook</button></div>`).join("")}</div>` : `<p class="muted">El backend generara 5 opciones de hook para la idea seleccionada.</p>`}<button class="primary-btn" type="button" data-workflow-action="generate-hooks">Generar hooks</button></article>`;
+}
+
+function workflowStoryPanel() {
+  if (!workflowState.selectedHook) return "";
+  const story = workflowState.story;
+  return `<article class="card"><span class="eyebrow">Paso 6 y 7</span><h3>Story Strategy y Storyboard</h3>${story ? `<div class="director-row"><span>Objetivo</span><strong>${story.objective}</strong></div><div class="director-row"><span>Narrador</span><strong>${story.narrator}</strong></div><div class="director-row"><span>Personaje</span><strong>${story.character}</strong></div><div class="director-row"><span>Escenario</span><strong>${story.scenario}</strong></div><div class="director-row"><span>Tono</span><strong>${story.tone}</strong></div><div class="director-row"><span>Duracion</span><strong>${story.duration_seconds}s</strong></div><div class="director-row"><span>Estilo</span><strong>${story.style}</strong></div><div class="scene-grid">${story.scenes.map(scene => `<article class="scene-card"><span>${scene.scene}</span><strong>${scene.visual}</strong><p>${scene.narration}</p><small>${scene.subtitles}</small></article>`).join("")}</div><p class="muted"><b>Narracion:</b> ${story.narration}</p><p class="muted"><b>CTA:</b> ${story.cta}</p>` : `<p class="muted">Genera objetivo, narrador, personaje, escenario, tono, duracion, estilo y storyboard.</p>`}<button class="primary-btn" type="button" data-workflow-action="generate-story">Generar Story Strategy</button></article>`;
+}
+
+function workflowProductionPanel() {
+  if (!workflowState.story) return "";
+  const plan = workflowState.productionPlan;
+  return `<article class="card"><span class="eyebrow">Paso 8</span><h3>Production Plan</h3>${plan ? `<div class="grid two"><article><div class="director-row"><span>Narrador</span><strong>${plan.narrator}</strong></div><div class="director-row"><span>Tipo de voz</span><strong>${plan.voice_type}</strong></div><div class="director-row"><span>Formato</span><strong>${plan.format}</strong></div><div class="director-row"><span>Plataformas</span><strong>${plan.platforms.join(", ")}</strong></div><div class="director-row"><span>Idioma</span><strong>${plan.language}</strong></div></article><article><div class="director-row"><span>Musica</span><strong>${plan.music}</strong></div><div class="director-row"><span>Iluminacion</span><strong>${plan.lighting}</strong></div><div class="director-row"><span>Camara</span><strong>${plan.camera_movement}</strong></div><div class="director-row"><span>Color</span><strong>${plan.color}</strong></div><div class="director-row"><span>Ritmo</span><strong>${plan.rhythm}</strong></div></article></div>` : `<p class="muted">Genera plan de produccion sin crear video, audio ni imagenes.</p>`}<button class="primary-btn" type="button" data-workflow-action="generate-production-plan">Generar Production Plan</button></article>`;
+}
+
+function workflowReadyPanel() {
+  if (!workflowState.productionPlan) return "";
+  return `<article class="card ready-card"><span class="eyebrow">Paso 9</span><h3>${workflowState.ready?.message || "READY TO GENERATE"}</h3><p>No se generara video todavia. El flujo queda preparado para una fase futura de video, audio, imagenes, subtitulos reales y publicacion.</p>${workflowState.ready ? `<div class="guardrail-list">${workflowState.ready.next_locked_steps.map(step => `<span>${step}</span>`).join("")}</div>${badge("Listo", "ok")}` : `<button class="primary-btn" type="button" data-workflow-action="ready-to-generate">Marcar listo para generar</button>`}</article>`;
+}
+
+function mvpWorkflow() {
+  return `${workflowProgressBar()}${workflowChannelForm()}${workflowOpportunityPanel()}${workflowIdeasPanel()}${workflowHooksPanel()}${workflowStoryPanel()}${workflowProductionPanel()}${workflowReadyPanel()}`;
+}
 var CONTENT_BRAIN_API_BASE = "http://127.0.0.1:8000";
 var contentBrainState = {
   status: "idle",
@@ -1069,6 +1224,7 @@ function renderScreen(id) {
   const routes = {
     login,
     dashboard,
+    "mvp-workflow": mvpWorkflow,
     intelligence,
     "global-intelligence": globalIntelligence,
     "digital-factory": digitalFactory,
@@ -1144,6 +1300,7 @@ function bindSoonButtons() {
     setTimeout(() => toast.classList.remove("show"), 1500);
   }));
   document.querySelectorAll("[data-run-brain]").forEach(btn => btn.addEventListener("click", () => runContentBrainSimulation()));
+  document.querySelectorAll("[data-workflow-action]").forEach(btn => btn.addEventListener("click", () => runWorkflowAction(btn.dataset.workflowAction, { ideaId: btn.dataset.ideaId, hookId: btn.dataset.hookId })));
 }
 function buildNav() {
   sideNav.innerHTML = screens.map(screen => `<a class="nav-link" href="#${screen.id}" data-id="${screen.id}" title="${screen.label}"><span class="nav-icon">${screen.icon}</span><span>${screen.label}</span><small class="nav-kpi">${screen.kpi}</small></a>`).join("");
@@ -1156,6 +1313,8 @@ document.getElementById("menuToggle").addEventListener("click", () => sidebar.cl
 window.addEventListener("hashchange", route);
 buildNav();
 route();
+
+
 
 
 
