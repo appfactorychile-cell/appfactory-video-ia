@@ -922,6 +922,146 @@ function monetization() { return `${metricCards()}${table(["Canal", "Pais", "Vie
 function costs() { return table(["Centro de costo", "Costo diario", "Peso", "Estado"], costRows.map(r => [r[0], r[1], r[2], badge(r[3], toneFor(r[3]))])) + barChart("Costos operacionales semanales"); }
 function settings() { return `<article class="card"><h3>Configuracion</h3><div class="form-grid">${["Zona horaria matriz", "Modo revision", "Auto publish", "Proveedor IA", "Storage", "Compliance", "Rate limits", "Observabilidad"].map(x => `<div class="field"><label>${x}</label><input readonly value="Configurable en fase futura" /></div>`).join("")}</div></article>`; }
 function company() { return `<div class="grid two"><article class="card"><span class="eyebrow">Empresa matriz</span><h3>AppFactoryChile</h3><p>appfactorychile@gmail.com</p><p class="muted">Perfil empresarial preparado para multi-organizacion, permisos, facturacion, auditoria y gobierno operacional global.</p></article>${statusPanel("Gobierno operativo")}</div>`; }
+var CONTENT_BRAIN_API_BASE = "http://127.0.0.1:8000";
+var contentBrainState = {
+  status: "idle",
+  step: "Ready",
+  error: "",
+  analysis: null,
+  recommendation: null,
+  storyboard: null,
+  productionPlan: null
+};
+var contentBrainRequest = {
+  topic: "AI tools for small businesses",
+  country: "Mexico",
+  language: "Spanish",
+  niche: "Technology"
+};
+
+function contentBrainPost(path) {
+  return fetch(`${CONTENT_BRAIN_API_BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(contentBrainRequest)
+  }).then(response => {
+    if (!response.ok) throw new Error(`Backend ${response.status} at ${path}`);
+    return response.json();
+  });
+}
+
+async function runContentBrainSimulation() {
+  try {
+    contentBrainState = { ...contentBrainState, status: "loading", step: "Opportunity -> Research", error: "" };
+    renderScreen(location.hash.replace("#", "") || "dashboard");
+    const analysis = await contentBrainPost("/api/content-brain/analyze");
+
+    contentBrainState = { ...contentBrainState, analysis, step: "Editorial Analysis" };
+    renderScreen(location.hash.replace("#", "") || "dashboard");
+    const recommendation = await contentBrainPost("/api/content-brain/recommend");
+
+    contentBrainState = { ...contentBrainState, recommendation, step: "Story Strategy" };
+    renderScreen(location.hash.replace("#", "") || "dashboard");
+    const storyboard = await contentBrainPost("/api/content-brain/storyboard");
+
+    contentBrainState = { ...contentBrainState, storyboard, step: "Production Plan" };
+    renderScreen(location.hash.replace("#", "") || "dashboard");
+    const productionPlan = await contentBrainPost("/api/content-brain/production-plan");
+
+    contentBrainState = { status: "ready", step: "Complete", error: "", analysis, recommendation, storyboard, productionPlan };
+    renderScreen(location.hash.replace("#", "") || "dashboard");
+  } catch (error) {
+    contentBrainState = { ...contentBrainState, status: "error", error: error.message, step: "Backend unavailable" };
+    renderScreen(location.hash.replace("#", "") || "dashboard");
+  }
+}
+
+function ensureContentBrainData() {
+  if (contentBrainState.status === "idle") runContentBrainSimulation();
+}
+
+function contentBrainControl() {
+  const state = contentBrainState.status === "ready" ? "Conectado" : contentBrainState.status === "loading" ? contentBrainState.step : contentBrainState.status === "error" ? "Error" : "Listo";
+  const tone = contentBrainState.status === "ready" ? "ok" : contentBrainState.status === "error" ? "warn" : "info";
+  return `<article class="card brain-control"><div><span class="eyebrow">Content Brain Backend</span><h3>Simular creacion completa</h3><p>Opportunity -> Research -> Ideas -> Ranking -> Story Strategy -> Production Plan desde FastAPI mock.</p><div class="guardrail-list"><span>${contentBrainRequest.country}</span><span>${contentBrainRequest.language}</span><span>${contentBrainRequest.niche}</span><span>${contentBrainRequest.topic}</span></div>${contentBrainState.error ? `<p class="muted brain-error">${contentBrainState.error}</p>` : ""}</div><div class="brain-actions">${badge(state, tone)}<button class="primary-btn" type="button" data-run-brain>Simular creacion completa</button></div></article>`;
+}
+
+function requireBrainData() {
+  ensureContentBrainData();
+  if (contentBrainState.status === "ready") return "";
+  if (contentBrainState.status === "error") return `${contentBrainControl()}<article class="card"><h3>Backend no disponible</h3><p class="muted">Ejecuta el backend en http://127.0.0.1:8000 y vuelve a presionar Simular creacion completa.</p></article>`;
+  return `${contentBrainControl()}<article class="card"><h3>Esperando respuesta del Content Brain</h3><p class="muted">El prototipo esta solicitando datos al backend mock mediante fetch().</p></article>`;
+}
+
+function brainScoreGridFromRanking(ranking) {
+  return scoreGrid(ranking.slice(0, 4).map(item => [item.title, item.score, item.reason]));
+}
+
+function storyDirector() {
+  const fallback = requireBrainData();
+  if (fallback) return fallback;
+  const strategy = contentBrainState.analysis.story_strategy;
+  const audience = contentBrainState.analysis.audience_profile;
+  const rows = [
+    ["Idea seleccionada", strategy.selected_idea],
+    ["Publico objetivo", audience.target_audience],
+    ["Pais", audience.country],
+    ["Idioma", audience.language],
+    ["Emocion principal", strategy.emotional_goal],
+    ["Objetivo del video", strategy.narrative_arc],
+    ["Personaje recomendado", strategy.character],
+    ["Estilo visual", strategy.visual_style],
+    ["Duracion", `${strategy.recommended_duration_seconds}s`],
+    ["Tono", strategy.tone]
+  ];
+  return `${contentBrainControl()}<div class="grid two"><article class="card director-panel"><span class="eyebrow">Story Director AI</span><h3>La IA transforma una oportunidad en una estrategia narrativa.</h3>${rows.map(([label, value], index) => `<div class="director-row"><span>${label}</span><strong>${value}</strong>${index === rows.length - 1 ? badge("Backend", "ok") : ""}</div>`).join("")}</article><article class="card"><span class="eyebrow">Ranking creativo</span><h3>Ideas priorizadas por el Content Brain</h3>${brainScoreGridFromRanking(contentBrainState.analysis.ranking)}</article></div>`;
+}
+
+function ideaLab() {
+  const fallback = requireBrainData();
+  if (fallback) return fallback;
+  const analysis = contentBrainState.analysis;
+  return `${contentBrainControl()}<article class="card"><span class="eyebrow">Idea Lab</span><h3>10 ideas generadas por backend mock</h3><p class="muted">Cada idea sale del Content Brain y luego entra al ranking editorial.</p>${analysis.ideas.map((idea, index) => `<div class="entity-row"><div><span class="entity-title">${String(index + 1).padStart(2, "0")} · ${idea.title}</span><span class="entity-meta">${idea.angle} · Emocion: ${idea.emotion} · ${idea.target_duration_seconds}s · ${idea.value_promise}</span></div>${badge(index === 0 ? "Idea" : "Mock", index === 0 ? "ok" : "info")}</div>`).join("")}</article>${table(["Rank", "Idea", "Score", "Curiosidad", "Conversacion", "Monetizacion"], analysis.ranking.map(item => [item.rank, item.title, `${item.score}/100`, `${item.curiosity_score}/100`, `${item.conversation_score}/100`, `${item.monetization_score}/100`]))}`;
+}
+
+function contentPipeline() {
+  const fallback = requireBrainData();
+  if (fallback) return fallback;
+  const analysis = contentBrainState.analysis;
+  const stages = [
+    ["Opportunity", `${analysis.opportunity_score}/100`, "Content Brain"],
+    ["Research", analysis.research_summary.summary, "Research AI"],
+    ["Idea Generation", `${analysis.ideas.length} ideas`, "Idea Generator AI"],
+    ["Idea Ranking", analysis.best_idea.title, "Ranking AI"],
+    ["Editorial Analysis", contentBrainState.recommendation.why_this_idea_is_better, "Editorial AI"],
+    ["Audience Analysis", analysis.audience_profile.target_audience, "Audience AI"],
+    ["Hook Generation", `${analysis.hooks.length} hooks`, "Hook AI"],
+    ["Story Strategy", analysis.story_strategy.narrative_arc, "Story Director AI"],
+    ["Video Strategy", analysis.story_strategy.visual_style, "Video Strategy AI"],
+    ["Production Plan", analysis.production_plan.format, "Production Planner AI"]
+  ];
+  return `${contentBrainControl()}<article class="card"><span class="eyebrow">Content Pipeline</span><h3>Opportunity -> Production Plan generado desde FastAPI</h3><div class="pipeline-flow">${stages.map(([stage, detail, owner], index) => `<div class="flow-step"><span class="flow-index">${String(index + 1).padStart(2, "0")}</span><strong>${stage}</strong><small>${owner}</small><p class="muted">${detail}</p><div>${badge("Backend", "ok")}<em>Mock real</em></div></div>`).join("")}</div></article>`;
+}
+
+function editorialDirector(compact = false) {
+  const fallback = requireBrainData();
+  if (fallback) return fallback;
+  const rec = contentBrainState.recommendation;
+  const rows = [
+    ["Mejor idea", rec.best_idea],
+    ["Por que es mejor", rec.why_this_idea_is_better],
+    ["Emocion", rec.target_emotion],
+    ["Duracion recomendada", `${rec.recommended_duration_seconds}s`],
+    ["Personaje", rec.recommended_character],
+    ["Estilo visual", rec.recommended_visual_style],
+    ["Tono", rec.recommended_tone],
+    ["Nivel de curiosidad", `${rec.curiosity_level}/100`],
+    ["Potencial de conversacion", `${rec.conversation_potential}/100`],
+    ["Potencial de monetizacion", `${rec.monetization_potential}/100`]
+  ];
+  const panel = `<article class="card director-panel"><span class="eyebrow">Editorial Director AI</span><h3>Recomendacion editorial desde Content Brain</h3>${rows.map(([label, value], index) => `<div class="director-row"><span>${label}</span><strong>${value}</strong>${index === rows.length - 1 ? badge("Recomendado", "ok") : ""}</div>`).join("")}</article>`;
+  return compact ? panel : `${contentBrainControl()}${panel}`;
+}
 function renderScreen(id) {
   const screen = screens.find(s => s.id === id) || screens[1];
   pageTitle.textContent = screen.label;
@@ -1003,6 +1143,7 @@ function bindSoonButtons() {
     toast.classList.add("show");
     setTimeout(() => toast.classList.remove("show"), 1500);
   }));
+  document.querySelectorAll("[data-run-brain]").forEach(btn => btn.addEventListener("click", () => runContentBrainSimulation()));
 }
 function buildNav() {
   sideNav.innerHTML = screens.map(screen => `<a class="nav-link" href="#${screen.id}" data-id="${screen.id}" title="${screen.label}"><span class="nav-icon">${screen.icon}</span><span>${screen.label}</span><small class="nav-kpi">${screen.kpi}</small></a>`).join("");
@@ -1015,6 +1156,7 @@ document.getElementById("menuToggle").addEventListener("click", () => sidebar.cl
 window.addEventListener("hashchange", route);
 buildNav();
 route();
+
 
 
 

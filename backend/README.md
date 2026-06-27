@@ -36,7 +36,7 @@ http://127.0.0.1:8000/docs
 - `POST /api/content/idea` - generate a mock content idea.
 - `POST /api/content/script` - generate a mock 20 to 45 second script.
 - `GET /api/pipeline` - list simulated pipeline runs.
-- `POST /api/pipeline/start` - simulate the production pipeline.
+- `POST /api/pipeline/start` - simulate the production pipeline.`r`n- `POST /api/content-brain/analyze` - transform an opportunity into a complete mock editorial strategy.`r`n- `POST /api/content-brain/recommend` - explain why the selected idea is best and how it should be produced.`r`n- `POST /api/content-brain/storyboard` - generate a mock storyboard, narration, subtitles and CTA.`r`n- `POST /api/content-brain/production-plan` - return the mock narrator, visual style, camera, music, platforms and duration.
 
 ## Simulated Pipeline
 
@@ -69,3 +69,4 @@ This MVP base must remain responsible and mock-only:
 - No copyrighted content copying.
 - No real credentials in the repository.
 - No external API calls.
+
