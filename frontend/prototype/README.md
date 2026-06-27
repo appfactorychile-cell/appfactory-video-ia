@@ -1,48 +1,65 @@
-﻿# Frontend Prototype
+﻿# Prototipo visual - APP FACTORY VIDEO IA
 
-Static premium visual prototype for APP FACTORY VIDEO IA.
+Este prototipo muestra la experiencia de usuario de APP FACTORY VIDEO IA en modo demostración.
 
-Open directly:
+## Estado actual
 
-```text
-C:\src\appfactory-video-ia\frontend\prototype\index.html
-```
+- Interfaz en español.
+- Menú lateral organizado por categorías.
+- Pantalla inicial de bienvenida.
+- Flujo guiado para crear contenido.
+- Datos simulados.
+- Conexión local al backend mock para el flujo MVP.
+- Sin IA real.
+- Sin generación de videos.
+- Sin generación de imágenes.
+- Sin voces reales.
+- Sin publicación automática.
+- Sin credenciales reales.
 
-Recommended local preview:
+## Cómo abrir
+
+Desde la carpeta del repositorio:
 
 ```bash
-cd C:\src\appfactory-video-ia\frontend\prototype
-python -m http.server 4173
+python -m http.server 5501 --directory C:\src\appfactory-video-ia\frontend\prototype
 ```
 
-Then open:
+Luego abrir:
 
 ```text
-http://localhost:4173/
+http://127.0.0.1:5501/#inicio
 ```
 
-Scope:
+Para probar el flujo completo:
 
-- Mock data only.
-- No backend.
-- No database.
-- No AI calls.
-- No real authentication.
-- No official API integrations.
-- No production logic.
+```text
+http://127.0.0.1:5501/#mvp-workflow
+```
 
-Purpose:
+## Secciones principales
 
-- Review a premium SaaS command center identity.
-- Navigate all screens before the real React application is built.
-- Validate global content network concepts: trends, countries, languages, agents, rendering, publishing, APIs, monetization, costs, and server health.
-- Review Fase 2.1 content quality concepts: Viral Psychology Engine, Channel DNA, Content Quality Gate, Entertainment Scoring, Idea Lab, Hook Builder, and Audience Curiosity Map.
-- Review Fase 2.2 Global Intelligence Engine concepts: opportunity radar, competitor intelligence, content pipeline, editorial director AI, content heatmap, decision timeline, and quality dashboard.
-- Review Fase 2.3 creative direction concepts: Story Director AI, Video Style Lab, Character & Scene Builder, Hook vs Retention Simulator, Vertical Video Blueprint, Smart Duration Engine, Attention Engine, and Retention Engine.
-- Review Fase 2.4 learning concepts: Learning & Evolution Engine, Memory Engine, Channel Memory, Country Memory, Language Memory, Experiment Engine, Creative Evolution, Global Knowledge, AI Self Improvement, Global Learning Map, and Next Best Action.
-- Review Fase 2.5 digital factory concepts: Digital Content Factory, Global Factory, End to End Pipeline, Video Factory Live, AI Workers, Multi Channel Manager, World Scheduler, Monetization Center, Mission Control, Full Video Journey, and Executive Overview.
+- Panel principal.
+- Crear contenido.
+- Mis proyectos.
+- Biblioteca.
+- Inteligencia Global.
+- Radar de Oportunidades.
+- Motor de Aprendizaje.
+- Director de Historias.
+- Laboratorio de Ideas.
+- Constructor de Ganchos.
+- Flujo de Contenido.
+- Plan de Producción.
+- Proceso del Video.
+- Programación.
+- Monetización.
+- Canales.
+- Configuración.
+- API.
+- Centro de Control.
 
+## Reglas
 
-
-
+Este prototipo no debe copiar contenido, no debe manipular algoritmos, no debe generar vistas falsas y no debe publicar en plataformas externas.
 
