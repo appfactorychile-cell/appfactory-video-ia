@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import agents, channels, content, content_brain, editorial, health, opportunities, pipeline, projects, workflow
 from app.core.config import get_settings
+from app.database.init_db import init_database
 
 settings = get_settings()
 
@@ -11,6 +12,11 @@ app = FastAPI(
     version=settings.version,
     description="Backend MVP base for APP FACTORY VIDEO IA using mock data only.",
 )
+
+@app.on_event("startup")
+def startup() -> None:
+    init_database()
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -30,5 +36,6 @@ app.include_router(workflow.router, prefix=settings.api_prefix)
 app.include_router(pipeline.router, prefix=settings.api_prefix)
 app.include_router(agents.router, prefix=settings.api_prefix)
 app.include_router(projects.router, prefix=settings.api_prefix)
+
 
 

@@ -1,102 +1,136 @@
-﻿from app.models.project import Project, ProjectDocument, SourceFile
-from app.projects import document_parser, project_sources, source_validator
+﻿from datetime import datetime
+from types import SimpleNamespace
 
-_projects: dict[str, Project] = {}
-_documents: dict[str, list[ProjectDocument]] = {}
-_sources = {}
-_active_project_id: str | None = None
+from app.database.session import SessionLocal
+from app.projects import document_parser, knowledge_loader, project_sources, source_validator
+from app.repositories import DocumentRepository, ProjectRepository
+
+
+def _project_to_domain(project):
+    if project is None:
+        return None
+    return SimpleNamespace(
+        id=project.id,
+        name=project.name,
+        description=project.description,
+        primary_language=project.primary_language,
+        country=project.country,
+        project_type=project.project_type,
+        status=project.status,
+        created_at=project.created_at,
+    )
+
+
+def _document_to_domain(document):
+    source_file = SimpleNamespace(
+        id=document.id,
+        filename=document.filename,
+        file_type=document.file_type,
+        size_bytes=document.size_bytes,
+        status=document.status,
+        uploaded_at=document.created_at,
+    )
+    return SimpleNamespace(
+        id=document.id,
+        project_id=document.project_id,
+        source_file=source_file,
+        authorized_for_ai=document.authorized_for_ai,
+        parser_status=document.parser_status,
+    )
 
 
 def seed_projects() -> None:
-    if _projects:
-        return
-    project = Project(
-        name="Codigo Nebula",
-        description="Proyecto ficticio para validar modo proyecto sin procesar documentos reales.",
-        primary_language="Espanol",
-        country="Chile",
-        project_type="Serie",
-    )
-    _projects[project.id] = project
-    _documents[project.id] = []
-    _sources[project.id] = []
+    with SessionLocal() as db:
+        repo = ProjectRepository(db)
+        if repo.list():
+            return
+        repo.create(
+            name="Codigo Nebula",
+            description="Proyecto ficticio para validar modo proyecto sin procesar documentos reales.",
+            primary_language="Espanol",
+            country="Chile",
+            project_type="Serie",
+        )
 
 
-def list_projects() -> list[Project]:
+def list_projects():
     seed_projects()
-    return list(_projects.values())
+    with SessionLocal() as db:
+        return [_project_to_domain(project) for project in ProjectRepository(db).list()]
 
 
-def create_project(project: Project) -> Project:
-    _projects[project.id] = project
-    _documents[project.id] = []
-    _sources[project.id] = []
-    return project
+def create_project(project):
+    with SessionLocal() as db:
+        created = ProjectRepository(db).create(
+            name=project.name,
+            description=project.description,
+            primary_language=project.primary_language,
+            country=project.country,
+            project_type=project.project_type,
+        )
+        return _project_to_domain(created)
 
 
-def get_project(project_id: str) -> Project | None:
+def get_project(project_id: str):
     seed_projects()
-    return _projects.get(project_id)
+    with SessionLocal() as db:
+        return _project_to_domain(ProjectRepository(db).get(project_id))
 
 
 def delete_project(project_id: str) -> bool:
-    global _active_project_id
-    if project_id not in _projects:
-        return False
-    del _projects[project_id]
-    _documents.pop(project_id, None)
-    _sources.pop(project_id, None)
-    if _active_project_id == project_id:
-        _active_project_id = None
-    return True
+    with SessionLocal() as db:
+        return ProjectRepository(db).delete(project_id)
 
 
-def add_document(project_id: str, filename: str, file_type: str, size_bytes: int) -> ProjectDocument:
-    if project_id not in _projects:
-        raise KeyError(project_id)
-    normalized_type = source_validator.normalize_file_type(file_type)
-    status = "Registrado" if source_validator.is_supported(file_type) else "Tipo no soportado"
-    parser_status = document_parser.register_document_only(filename, normalized_type)
-    doc = ProjectDocument(
-        project_id=project_id,
-        source_file=SourceFile(filename=filename, file_type=normalized_type, size_bytes=size_bytes, status=status),
-        authorized_for_ai=status == "Registrado",
-        parser_status=parser_status,
-    )
-    _documents.setdefault(project_id, []).append(doc)
-    if status == "Registrado":
-        _sources.setdefault(project_id, []).append(project_sources.create_source(project_id, filename, normalized_type))
-    return doc
+def add_document(project_id: str, filename: str, file_type: str, size_bytes: int):
+    with SessionLocal() as db:
+        project_repo = ProjectRepository(db)
+        if project_repo.get(project_id) is None:
+            raise KeyError(project_id)
+        normalized_type = source_validator.normalize_file_type(file_type)
+        supported = source_validator.is_supported(file_type)
+        parser_status = document_parser.register_document_only(filename, normalized_type)
+        document = DocumentRepository(db).create(
+            project_id=project_id,
+            filename=filename,
+            file_type=normalized_type,
+            size_bytes=size_bytes,
+            authorized_for_ai=supported,
+            parser_status=parser_status,
+        )
+        return _document_to_domain(document)
 
 
-def list_documents(project_id: str) -> list[ProjectDocument]:
-    if project_id not in _projects:
-        raise KeyError(project_id)
-    return _documents.get(project_id, [])
+def list_documents(project_id: str):
+    with SessionLocal() as db:
+        if ProjectRepository(db).get(project_id) is None:
+            raise KeyError(project_id)
+        return [_document_to_domain(document) for document in DocumentRepository(db).list_by_project(project_id)]
 
 
 def list_sources(project_id: str):
-    if project_id not in _projects:
-        raise KeyError(project_id)
-    return _sources.get(project_id, [])
+    documents = list_documents(project_id)
+    return [
+        project_sources.create_source(project_id, document.source_file.filename, document.source_file.file_type)
+        for document in documents
+        if document.authorized_for_ai
+    ]
 
 
-def activate_project(project_id: str) -> Project:
-    global _active_project_id
-    project = get_project(project_id)
-    if project is None:
-        raise KeyError(project_id)
-    _active_project_id = project_id
-    return project
+def activate_project(project_id: str):
+    with SessionLocal() as db:
+        project = ProjectRepository(db).activate(project_id)
+        if project is None:
+            raise KeyError(project_id)
+        return _project_to_domain(project)
 
 
 def deactivate_project() -> None:
-    global _active_project_id
-    _active_project_id = None
+    with SessionLocal() as db:
+        ProjectRepository(db).deactivate_all()
 
 
-def get_active_project() -> Project | None:
+def get_active_project():
     seed_projects()
-    if _active_project_id is None:
-        return None
-    return _projects.get(_active_project_id)
+    with SessionLocal() as db:
+        return _project_to_domain(ProjectRepository(db).active())

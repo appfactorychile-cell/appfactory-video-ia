@@ -1,5 +1,4 @@
-﻿from dataclasses import asdict
-from datetime import datetime
+﻿from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, status
 
@@ -25,18 +24,15 @@ def _iso(value: datetime) -> str:
 
 
 def _project_schema(project) -> ProjectSchema:
-    data = asdict(project)
-    data["created_at"] = _iso(project.created_at)
-    return ProjectSchema(**data)
+    return ProjectSchema(id=project.id, name=project.name, description=project.description, primary_language=project.primary_language, country=project.country, project_type=project.project_type, status=project.status, created_at=_iso(project.created_at))
 
 
 def _document_schema(document) -> ProjectDocumentSchema:
-    source = asdict(document.source_file)
-    source["uploaded_at"] = _iso(document.source_file.uploaded_at)
+    source = SourceFileSchema(id=document.source_file.id, filename=document.source_file.filename, file_type=document.source_file.file_type, size_bytes=document.source_file.size_bytes, status=document.source_file.status, uploaded_at=_iso(document.source_file.uploaded_at))
     return ProjectDocumentSchema(
         id=document.id,
         project_id=document.project_id,
-        source_file=SourceFileSchema(**source),
+        source_file=source,
         authorized_for_ai=document.authorized_for_ai,
         parser_status=document.parser_status,
     )
@@ -50,7 +46,7 @@ def _detail(project_id: str) -> ProjectDetailResponse:
     return ProjectDetailResponse(
         project=_project_schema(project),
         documents=[_document_schema(item) for item in project_library.list_documents(project_id)],
-        sources=[asdict(item) for item in project_library.list_sources(project_id)],
+        sources=[item.__dict__ for item in project_library.list_sources(project_id)],
         memory=ProjectMemorySchema(
             project_id=memory.project_id,
             mode=memory.mode,
@@ -151,3 +147,4 @@ def activate_project(project_id: str) -> ActiveProjectResponse:
         active_project=_project_schema(project),
         message=f"Proyecto activo: {project.name}. La IA solo usara fuentes autorizadas de este proyecto.",
     )
+

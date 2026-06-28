@@ -110,3 +110,100 @@ Projects are optional. APP FACTORY VIDEO IA can work in `Contenido global` mode 
 - `POST /api/projects/{project_id}/documents` - register a document without processing it.
 - `GET /api/projects/{project_id}/documents` - list registered documents.
 - `POST /api/projects/{project_id}/activate` - activate project-linked mode.
+
+## FASE 6.0 - PostgreSQL Persistence
+
+The backend now includes a real persistence foundation using SQLAlchemy 2.x, Alembic and PostgreSQL.
+
+### Install PostgreSQL on Windows
+
+Recommended options:
+
+1. Install from the official PostgreSQL installer: https://www.postgresql.org/download/windows/
+2. Or use Docker Desktop:
+
+```bash
+docker run --name appfactory-postgres -e POSTGRES_USER=appfactory -e POSTGRES_PASSWORD=change_me -e POSTGRES_DB=app_factory_video_ia -p 5432:5432 -d postgres:16
+```
+
+### Create the Database Manually
+
+```sql
+CREATE USER appfactory WITH PASSWORD 'change_me';
+CREATE DATABASE app_factory_video_ia OWNER appfactory;
+GRANT ALL PRIVILEGES ON DATABASE app_factory_video_ia TO appfactory;
+```
+
+### Environment
+
+Create `.env` at the repository root:
+
+```text
+DATABASE_URL=postgresql+psycopg://appfactory:change_me@localhost:5432/app_factory_video_ia
+SECRET_KEY=change_me_local_only
+APP_ENV=local
+```
+
+### Install Backend Dependencies
+
+```bash
+cd C:\src\appfactory-video-ia\backend
+pip install -r requirements.txt
+```
+
+### Run Migrations
+
+```bash
+cd C:\src\appfactory-video-ia\backend
+python -m alembic upgrade head
+```
+
+The initial migration creates:
+
+- users
+- projects
+- channels
+- documents
+- ideas
+- storyboards
+- production_plans
+- workflow_sessions
+- ai_agents
+- settings
+
+Each table includes UUID, created date, updated date and status.
+
+### Run Backend
+
+```bash
+cd C:\src\appfactory-video-ia\backend
+uvicorn app.main:app --reload
+```
+
+### Seed Persistence Validation Data
+
+```bash
+cd C:\src\appfactory-video-ia\backend
+python -m scripts.seed_persistence
+```
+
+This creates or verifies:
+
+- 1 user
+- 2 projects
+- 3 channels
+- 5 documents
+
+Restart the backend and call:
+
+```text
+GET /api/projects
+GET /api/channels
+GET /api/projects/{project_id}/documents
+```
+
+The data should remain after restart because it is stored in PostgreSQL.
+
+### Current Scope
+
+PostgreSQL persistence is connected for user/channel/project/document storage foundations. AI providers, video generation, audio generation, TikTok and external APIs remain intentionally disabled.
