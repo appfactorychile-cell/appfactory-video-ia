@@ -8,6 +8,7 @@ from app.schemas.content_brain_schema import (
     ProductionPlanSchema,
     StoryboardSceneSchema,
 )
+from app.projects import project_library
 from app.services import (
     audience_service,
     hook_service,
@@ -19,7 +20,15 @@ from app.services import (
 )
 
 
+def _source_context() -> tuple[str, str]:
+    active_project = project_library.get_active_project()
+    if active_project is None:
+        return "Contenido global", "Sin proyecto activo. La IA trabaja con tendencias globales y locales simuladas."
+    return "Proyecto vinculado", f"Proyecto activo: {active_project.name}. Usar solo informacion autorizada de este proyecto."
+
+
 def analyze(payload: ContentBrainRequest) -> ContentBrainAnalysisResponse:
+    source_mode, project_context = _source_context()
     research = research_service.research_opportunity(payload)
     ideas = idea_generator_service.generate_ideas(research)
     ranking = idea_ranking_service.rank_ideas(ideas)
@@ -30,6 +39,8 @@ def analyze(payload: ContentBrainRequest) -> ContentBrainAnalysisResponse:
     production_plan = production_plan_service.build_production_plan(story_strategy, payload.language)
 
     return ContentBrainAnalysisResponse(
+        source_mode=source_mode,
+        project_context=project_context,
         opportunity_score=best_idea.score,
         research_summary=asdict(research),
         ideas=[asdict(idea) for idea in ideas],
@@ -47,6 +58,8 @@ def recommend(payload: ContentBrainRequest) -> ContentBrainRecommendationRespons
     best = result.best_idea
     strategy = result.story_strategy
     return ContentBrainRecommendationResponse(
+        source_mode=result.source_mode,
+        project_context=result.project_context,
         best_idea=best.title,
         why_this_idea_is_better=best.reason,
         target_emotion=strategy.emotional_goal,
@@ -94,3 +107,5 @@ def storyboard(payload: ContentBrainRequest) -> ContentBrainStoryboardResponse:
 
 def production_plan(payload: ContentBrainRequest) -> ProductionPlanSchema:
     return analyze(payload).production_plan
+
+

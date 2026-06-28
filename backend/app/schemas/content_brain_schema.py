@@ -77,6 +77,8 @@ class ProductionPlanSchema(BaseModel):
 
 
 class ContentBrainAnalysisResponse(BaseModel):
+    source_mode: str
+    project_context: str
     opportunity_score: int
     research_summary: ResearchResultSchema
     ideas: list[ContentIdeaSchema]
@@ -89,6 +91,8 @@ class ContentBrainAnalysisResponse(BaseModel):
 
 
 class ContentBrainRecommendationResponse(BaseModel):
+    source_mode: str
+    project_context: str
     best_idea: str
     why_this_idea_is_better: str
     target_emotion: str
@@ -118,3 +122,5 @@ class ContentBrainStoryboardResponse(BaseModel):
     subtitles: list[str]
     cta: str
     duration_seconds: int
+
+

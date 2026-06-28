@@ -95,3 +95,18 @@ The mock AI company is exposed under the `AI Agents Platform` Swagger tag:
 - `GET /api/agents/{agent_name}` - inspect one agent by slug or name.
 
 The module is mock-only. It does not call OpenAI, Gemini, external APIs, video generators, audio providers or publishing services.
+
+## Project Source Library Routes
+
+Projects are optional. APP FACTORY VIDEO IA can work in `Contenido global` mode without any linked project, or in `Proyecto vinculado` mode using only authorized project sources.
+
+- `GET /api/projects` - list mock projects.
+- `POST /api/projects` - create a mock project.
+- `GET /api/projects/active` - show current source mode and active project.
+- `POST /api/projects/deactivate` - return to global content mode.
+- `GET /api/projects/supported-sources` - list document types prepared for future parsing.
+- `GET /api/projects/{project_id}` - inspect a project, documents, sources and mock memory.
+- `DELETE /api/projects/{project_id}` - delete a mock project.
+- `POST /api/projects/{project_id}/documents` - register a document without processing it.
+- `GET /api/projects/{project_id}/documents` - list registered documents.
+- `POST /api/projects/{project_id}/activate` - activate project-linked mode.

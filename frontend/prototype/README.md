@@ -76,3 +76,21 @@ El prototipo incluye una nueva categoria `AGENTES IA` con pantallas para:
 - Rendimiento.
 
 Estas pantallas consumen los endpoints mock del backend local bajo `/api/agents`. No conectan modelos reales, APIs externas, audio, video, imagenes ni publicacion automatica.
+
+## FASE 5.0 - Project Source Library
+
+El prototipo incluye una nueva categoria `PROYECTOS` para trabajar en dos modos:
+
+- `Contenido global`: la IA no usa ningun proyecto conectado.
+- `Proyecto vinculado`: la IA usa solo informacion autorizada del proyecto activo.
+
+Pantallas incluidas:
+
+- Mis Proyectos.
+- Crear Proyecto.
+- Biblioteca.
+- Documentos.
+- Proyecto Activo.
+- Fuentes.
+
+La biblioteca registra documentos mock por API, pero no procesa archivos reales todavia.

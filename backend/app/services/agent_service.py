@@ -18,6 +18,7 @@ from app.agents import (
     voice_agent,
 )
 from app.models.agent import AgentTimelineStep
+from app.projects import project_library
 from app.schemas.agent_schema import (
     AgentProfileSchema,
     AgentSimulationRequest,
@@ -90,8 +91,11 @@ def get_status() -> AgentStatusOverviewResponse:
 
 
 def simulate(payload: AgentSimulationRequest) -> AgentSimulationResponse:
+    active_project = project_library.get_active_project()
+    source_mode = "Proyecto vinculado" if active_project else "Contenido global"
+    mode_action = f"Define modo proyecto usando solo fuentes autorizadas de {active_project.name}" if active_project else "Define modo global sin usar proyectos vinculados"
     steps = [
-        AgentTimelineStep("08:00", "Director General IA", "Recibe mision y define criterio editorial", "Trabajando", 94),
+        AgentTimelineStep("08:00", "Director General IA", mode_action, "Trabajando", 94),
         AgentTimelineStep("08:01", "Research Agent", "Resume contexto seguro y puntos de investigacion", "Completado", 91),
         AgentTimelineStep("08:02", "Trend Agent", "Evalua oportunidad por pais, idioma y nicho", "Completado", 89),
         AgentTimelineStep("08:03", "Editorial Agent", "Decide enfoque responsable y original", "Completado", 93),
@@ -103,6 +107,8 @@ def simulate(payload: AgentSimulationRequest) -> AgentSimulationResponse:
         AgentTimelineStep("08:07", "Director General IA", "Aprueba resultado mock y siguiente accion", "Completado", 94),
     ]
     return AgentSimulationResponse(
+        source_mode=source_mode,
+        active_project_name=active_project.name if active_project else None,
         mission=payload.mission,
         director_summary="El Director General IA coordino agentes especializados y aprobo una estrategia editorial mock, original y responsable.",
         timeline=[AgentTimelineStepSchema(**asdict(step)) for step in steps],
@@ -111,4 +117,6 @@ def simulate(payload: AgentSimulationRequest) -> AgentSimulationResponse:
         confidence_score=94,
         next_action="Enviar la estrategia aprobada al flujo guiado de creacion de contenido.",
     )
+
+
 

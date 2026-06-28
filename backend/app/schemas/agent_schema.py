@@ -46,6 +46,8 @@ class AgentTimelineStepSchema(BaseModel):
 
 
 class AgentSimulationResponse(BaseModel):
+    source_mode: str
+    active_project_name: str | None
     mission: str
     director_summary: str
     timeline: list[AgentTimelineStepSchema]
@@ -53,3 +55,5 @@ class AgentSimulationResponse(BaseModel):
     quality_score: int
     confidence_score: int
     next_action: str
+
+
