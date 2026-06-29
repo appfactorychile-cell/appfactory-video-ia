@@ -3,13 +3,22 @@ from dataclasses import asdict
 from fastapi import APIRouter
 
 from app.animation.animation_manager import animation_manager
+from app.animation import scene_composer
+from app.animation import animation_timeline as animation_timeline_service
 from app.schemas.animation_schema import (
+    AnimationTimelineBuildRequest,
+    AnimationTimelineBuildResponse,
+    AnimationTimelinePreviewResponse,
     AnimationCreateRequest,
     AnimationLibraryResponse,
     AnimationProjectResponse,
     AnimationRenderPlanResponse,
     AnimationTemplateSchema,
     AnimationTimelineSchema,
+    SceneComposeRequest,
+    SceneCompositionResponse,
+    VideoScenesComposeRequest,
+    VideoScenesCompositionResponse,
 )
 
 router = APIRouter(prefix="/animation", tags=["Animated Video Engine"])
@@ -43,6 +52,36 @@ def animation_projects() -> list[dict[str, object]]:
 @router.post("/create", response_model=AnimationProjectResponse, summary="Create Animated Video Plan")
 def create_animation(payload: AnimationCreateRequest) -> dict[str, object]:
     return asdict(animation_manager.create_project(payload.model_dump()))
+
+
+@router.post("/compose-scene", response_model=SceneCompositionResponse, summary="Compose Animated Scene")
+def compose_scene(payload: SceneComposeRequest) -> dict[str, object]:
+    return scene_composer.compose_scene(payload.model_dump())
+
+
+@router.post("/compose-video-scenes", response_model=VideoScenesCompositionResponse, summary="Compose Animated Video Scenes")
+def compose_video_scenes(payload: VideoScenesComposeRequest) -> dict[str, object]:
+    return scene_composer.compose_video_scenes(payload.model_dump())
+
+
+@router.get("/scene-preview/{scene_id}", response_model=SceneCompositionResponse, summary="Animated Scene Preview")
+def scene_preview(scene_id: str) -> dict[str, object]:
+    return scene_composer.get_scene_preview(scene_id)
+
+
+@router.post("/build-timeline", response_model=AnimationTimelineBuildResponse, summary="Build Animation Timeline")
+def build_animation_timeline(payload: AnimationTimelineBuildRequest) -> dict[str, object]:
+    return animation_timeline_service.build_timeline(payload.model_dump())
+
+
+@router.get("/timeline/{timeline_id}", response_model=AnimationTimelineBuildResponse, summary="Get Animation Timeline")
+def get_animation_timeline(timeline_id: str) -> dict[str, object]:
+    return animation_timeline_service.get_timeline(timeline_id)
+
+
+@router.post("/preview-timeline", response_model=AnimationTimelinePreviewResponse, summary="Preview Animation Timeline")
+def preview_animation_timeline(payload: AnimationTimelineBuildRequest) -> dict[str, object]:
+    return animation_timeline_service.preview_timeline(payload.model_dump())
 
 
 @router.get("/{project_id}", response_model=AnimationProjectResponse, summary="Animated Video Detail")

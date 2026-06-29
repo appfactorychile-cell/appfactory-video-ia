@@ -81,3 +81,80 @@ class AnimationRenderPlanResponse(BaseModel):
     steps: list[str]
     output_format: str
     note: str
+
+
+class SceneComposeRequest(BaseModel):
+    scene_id: str | None = None
+    title: str = Field("Hook visual")
+    main_text: str = Field("Esto parece simple, pero cambia como se crea contenido.")
+    subtitle: str = Field("La oportunidad aparece antes que el video.")
+    duration_seconds: int = Field(10, ge=3, le=30)
+    character: str = Field("Narrador 2D")
+    tone: str = Field("premium")
+
+
+class VideoScenesComposeRequest(BaseModel):
+    video_id: str | None = None
+    storyboard: list[dict[str, object]] | None = None
+
+
+class SceneCompositionResponse(BaseModel):
+    scene_id: str
+    title: str
+    main_text: str
+    subtitle: str
+    duration_seconds: int
+    background: dict[str, object]
+    character: dict[str, object]
+    icons: list[dict[str, object]]
+    layers: list[dict[str, object]]
+    suggested_animation: str
+    aspect_ratio: str
+    status: str
+
+
+class VideoScenesCompositionResponse(BaseModel):
+    video_id: str
+    status: str
+    scene_count: int
+    scenes: list[SceneCompositionResponse]
+
+
+class AnimationTimelineBuildRequest(BaseModel):
+    timeline_id: str | None = None
+    scenes: list[dict[str, object]] | None = None
+
+
+class AnimationTimelineSceneResponse(BaseModel):
+    scene_id: str
+    title: str
+    start_time: int
+    end_time: int
+    duration_seconds: int
+    layers: list[dict[str, object]]
+    keyframes: list[dict[str, object]]
+    entry_animation: str
+    exit_animation: str
+    zoom: dict[str, object]
+    pan: dict[str, object]
+    transition: dict[str, object]
+    subtitles: list[dict[str, object]]
+    camera_events: list[dict[str, object]]
+    text_events: list[dict[str, object]]
+
+
+class AnimationTimelineBuildResponse(BaseModel):
+    timeline_id: str
+    status: str
+    total_duration_seconds: int
+    scene_count: int
+    scenes: list[AnimationTimelineSceneResponse]
+    global_transitions: list[dict[str, object]]
+    preview: dict[str, object]
+
+
+class AnimationTimelinePreviewResponse(BaseModel):
+    timeline_id: str
+    status: str
+    total_duration_seconds: int
+    frames: list[dict[str, object]]

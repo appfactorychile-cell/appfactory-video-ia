@@ -552,10 +552,161 @@ body {
   border-color: rgba(34, 197, 94, 0.28);
   background: linear-gradient(135deg, rgba(6, 78, 59, 0.18), rgba(17, 24, 39, 0.92));
 }
+.render-engine-card {
+  border-color: rgba(96, 165, 250, 0.28);
+  background: linear-gradient(135deg, rgba(9, 25, 58, 0.92), rgba(17, 24, 39, 0.94));
+}
+.render-engine-card.available {
+  border-color: rgba(34, 197, 94, 0.34);
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.18), rgba(17, 24, 39, 0.94));
+}
+.render-engine-card.missing {
+  border-color: rgba(245, 158, 11, 0.32);
+  background: linear-gradient(135deg, rgba(120, 53, 15, 0.18), rgba(17, 24, 39, 0.94));
+}
+.render-version, .render-path {
+  display: block; max-width: 100%; overflow-wrap: anywhere; font-size: 15px;
+}
+.first-render-card {
+  border-color: rgba(168, 85, 247, 0.3);
+  background:
+    radial-gradient(circle at 18% 12%, rgba(56, 189, 248, 0.16), transparent 30%),
+    linear-gradient(135deg, rgba(9, 25, 58, 0.92), rgba(24, 16, 54, 0.94));
+}
+.first-render-card .quick-actions { margin: 18px 0; }
+.render-result-grid { margin: 18px 0; }
+.render-output-card {
+  margin-top: 14px;
+  border-color: rgba(34, 197, 94, 0.28);
+  background: linear-gradient(135deg, rgba(6, 78, 59, 0.16), rgba(15, 23, 42, 0.9));
+}
+.render-output-card h3 { font-size: 24px; }
+.scene-composer-grid { display: grid; grid-template-columns: repeat(2, minmax(320px, 1fr)); gap: 18px; }
+.scene-composer-card {
+  display: grid; grid-template-columns: minmax(220px, 280px) minmax(0, 1fr); gap: 18px; align-items: stretch;
+  padding: 16px; border: 1px solid rgba(96, 165, 250, 0.22); border-radius: 8px;
+  background: linear-gradient(135deg, rgba(9, 25, 58, 0.74), rgba(17, 24, 39, 0.94));
+  box-shadow: var(--shadow);
+}
+.phone-preview {
+  position: relative; overflow: hidden; width: 100%; aspect-ratio: 9 / 16; min-height: 420px;
+  border: 1px solid rgba(147, 197, 253, 0.3); border-radius: 8px;
+  background: #050816; isolation: isolate;
+}
+.scene-bg {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(155deg, rgba(14, 165, 233, 0.32), rgba(124, 58, 237, 0.22) 46%, rgba(2, 6, 23, 0.96)),
+    repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 1px, transparent 1px 34px);
+}
+.scene-glow {
+  position: absolute; width: 160px; height: 160px; border-radius: 50%; filter: blur(18px); opacity: .72;
+  background: rgba(96, 165, 250, 0.34);
+}
+.scene-glow.one { left: -50px; top: 42px; }
+.scene-glow.two { right: -70px; bottom: 120px; background: rgba(168, 85, 247, 0.32); }
+.scene-title {
+  position: absolute; left: 9%; top: 7%; right: 9%; z-index: 2;
+  font-size: 22px; line-height: 1.08; font-weight: 950; color: #f8fbff;
+}
+.scene-icon-row { position: absolute; left: 9%; top: 25%; display: flex; gap: 8px; z-index: 2; }
+.scene-icon-row span {
+  display: grid; place-items: center; width: 42px; height: 42px; border-radius: 8px;
+  border: 1px solid rgba(191, 219, 254, 0.28); background: rgba(15, 23, 42, 0.72);
+  color: #bfdbfe; font-size: 11px; font-weight: 950;
+}
+.scene-character {
+  position: absolute; right: 9%; top: 34%; z-index: 2; width: 92px; height: 150px;
+}
+.scene-character i {
+  position: absolute; left: 28px; top: 0; width: 42px; height: 42px; border-radius: 50%;
+  background: linear-gradient(135deg, #bfdbfe, #60a5fa);
+  box-shadow: 0 0 0 9px rgba(96, 165, 250, 0.1);
+}
+.scene-character b {
+  position: absolute; left: 12px; top: 48px; width: 74px; height: 92px; border-radius: 34px 34px 12px 12px;
+  background: linear-gradient(180deg, rgba(14, 165, 233, 0.9), rgba(124, 58, 237, 0.88));
+}
+.scene-main-text {
+  position: absolute; left: 9%; right: 9%; bottom: 20%; z-index: 2;
+  padding: 12px; border: 1px solid rgba(191, 219, 254, 0.2); border-radius: 8px;
+  background: rgba(2, 6, 23, 0.68); font-size: 15px; line-height: 1.26; font-weight: 850;
+}
+.scene-subtitle {
+  position: absolute; left: 8%; right: 8%; bottom: 6%; z-index: 2;
+  min-height: 42px; display: grid; place-items: center; padding: 8px 10px; border-radius: 8px;
+  background: rgba(248, 250, 252, 0.92); color: #0f172a; font-size: 12px; line-height: 1.2; font-weight: 900; text-align: center;
+}
+.scene-composer-info { display: grid; align-content: start; gap: 10px; min-width: 0; }
+.scene-composer-info h3 { font-size: 24px; line-height: 1.15; }
+.scene-composer-info p { color: var(--soft); line-height: 1.55; }
+.layer-list { display: grid; gap: 8px; }
+.layer-list div {
+  display: grid; gap: 4px; padding: 10px 11px; border: 1px solid rgba(148, 163, 184, 0.14); border-radius: 8px;
+  background: rgba(15, 23, 42, 0.54);
+}
+.layer-list strong { font-size: 13px; }
+.layer-list small { color: var(--muted); }
+.animated-timeline-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(240px, 330px); gap: 18px; align-items: start; }
+.time-ruler {
+  display: flex; justify-content: space-between; gap: 10px; margin: 16px 0 8px; color: var(--muted); font-size: 11px; font-weight: 850;
+}
+.timeline-track {
+  position: relative; min-height: 118px; border: 1px solid rgba(96, 165, 250, 0.18); border-radius: 8px;
+  background:
+    repeating-linear-gradient(90deg, rgba(148, 163, 184, 0.08) 0 1px, transparent 1px 10%),
+    rgba(15, 23, 42, 0.56);
+  overflow: hidden;
+}
+.timeline-track section {
+  position: absolute; left: var(--start); width: var(--width); top: 16px; bottom: 16px; min-width: 92px;
+  padding: 12px; border: 1px solid rgba(191, 219, 254, 0.22); border-radius: 8px;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.22), rgba(124, 58, 237, 0.18));
+  overflow: hidden;
+}
+.timeline-track strong, .timeline-track small { display: block; }
+.timeline-track strong { font-size: 14px; line-height: 1.15; }
+.timeline-track small { margin-top: 7px; color: var(--soft); font-size: 11px; line-height: 1.25; }
+.keyframe-rail {
+  position: relative; height: 30px; margin-top: 10px; border-radius: 999px;
+  background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(148, 163, 184, 0.12);
+}
+.keyframe-rail i {
+  position: absolute; top: 50%; width: 9px; height: 9px; border-radius: 50%; transform: translate(-50%, -50%);
+  background: #c4b5fd; box-shadow: 0 0 18px rgba(196, 181, 253, 0.78);
+}
+.timeline-preview-card { display: grid; justify-items: center; gap: 12px; }
+.timeline-phone { max-width: 260px; min-height: 462px; }
+.timeline-playhead {
+  position: absolute; left: 10%; right: 10%; top: 31%; height: 3px; z-index: 3;
+  background: linear-gradient(90deg, transparent, #f8fafc, transparent);
+  animation: playheadSweep 2.8s ease-in-out infinite;
+}
+@keyframes playheadSweep { 0% { transform: translateY(0); opacity: .42; } 50% { transform: translateY(132px); opacity: 1; } 100% { transform: translateY(0); opacity: .42; } }
+.timeline-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(280px, 1fr)); gap: 16px; margin-top: 18px; }
+.timeline-scene-card h3 { font-size: 22px; }
+.timeline-tags { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.timeline-tags span {
+  display: inline-flex; min-height: 32px; align-items: center; padding: 0 10px; border-radius: 999px;
+  border: 1px solid rgba(96, 165, 250, 0.22); background: rgba(96, 165, 250, 0.08);
+  color: #dbeafe; font-size: 12px; font-weight: 850;
+}
+.subtitle-list { display: grid; gap: 8px; margin-top: 12px; }
+.subtitle-list p {
+  margin: 0; padding: 10px 11px; border-radius: 8px; background: rgba(248, 250, 252, 0.08);
+  color: var(--soft); font-size: 13px; line-height: 1.35;
+}
+.subtitle-list b { color: #93c5fd; margin-right: 8px; }
 @media (max-width: 1280px) {
   .animation-flow, .preview-stage { grid-template-columns: repeat(2, minmax(180px, 1fr)); }
   .template-grid { grid-template-columns: repeat(2, minmax(230px, 1fr)); }
+  .scene-composer-grid { grid-template-columns: 1fr; }
+  .animated-timeline-layout { grid-template-columns: 1fr; }
 }
 @media (max-width: 760px) {
   .animation-flow, .preview-stage, .template-grid { grid-template-columns: 1fr; }
+  .scene-composer-card { grid-template-columns: 1fr; }
+  .phone-preview { min-height: 500px; }
+  .timeline-detail-grid { grid-template-columns: 1fr; }
+  .timeline-track { overflow-x: auto; }
 }

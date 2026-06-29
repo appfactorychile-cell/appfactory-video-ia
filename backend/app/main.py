@@ -15,6 +15,7 @@ from app.api.routes import (
     pipeline,
     production,
     projects,
+    render,
     workflow,
 )
 from app.core.config import get_settings
@@ -55,6 +56,7 @@ app.include_router(pipeline.router, prefix=settings.api_prefix)
 app.include_router(production.router, prefix=settings.api_prefix)
 app.include_router(agents.router, prefix=settings.api_prefix)
 app.include_router(projects.router, prefix=settings.api_prefix)
+app.include_router(render.router, prefix=settings.api_prefix)
 
 
 
