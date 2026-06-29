@@ -29,6 +29,9 @@ class Settings(BaseModel):
     mock_mode: bool = False
     database_url: str = "postgresql+psycopg://appfactory:change_me@localhost:5432/app_factory_video_ia"
     secret_key: str = "change_me_local_only"
+    openai_api_key: str = ""
+    openai_model: str = "gpt-4.1-mini"
+    openai_timeout: int = 45
 
 
 @lru_cache
@@ -39,4 +42,7 @@ def get_settings() -> Settings:
         environment=os.getenv("APP_ENV", "local"),
         database_url=os.getenv("DATABASE_URL", "postgresql+psycopg://appfactory:change_me@localhost:5432/app_factory_video_ia"),
         secret_key=os.getenv("SECRET_KEY", "change_me_local_only"),
+        openai_api_key=os.getenv("OPENAI_API_KEY", ""),
+        openai_model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
+        openai_timeout=int(os.getenv("OPENAI_TIMEOUT", "45")),
     )
