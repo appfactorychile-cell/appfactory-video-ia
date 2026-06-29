@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.routes import (
     ai,
     agents,
+    animation,
     channels,
     content,
     content_brain,
@@ -42,6 +43,7 @@ app.add_middleware(
 
 app.include_router(health.router)
 app.include_router(ai.router, prefix=settings.api_prefix)
+app.include_router(animation.router, prefix=settings.api_prefix)
 app.include_router(channels.router, prefix=settings.api_prefix)
 app.include_router(opportunities.router, prefix=settings.api_prefix)
 app.include_router(editorial.router, prefix=settings.api_prefix)
