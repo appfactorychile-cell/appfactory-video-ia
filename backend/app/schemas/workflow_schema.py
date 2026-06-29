@@ -43,6 +43,7 @@ class WorkflowChooseHookRequest(WorkflowStepRequest):
 
 
 class WorkflowOpportunityResponse(WorkflowBaseResponse):
+    executive_decision: dict[str, object]
     opportunity_score: int
     competition: str
     potential: str
@@ -133,6 +134,7 @@ class WorkflowReadyResponse(WorkflowBaseResponse):
 class WorkflowStateResponse(WorkflowBaseResponse):
     channel: WorkflowChannelResponse
     opportunity: dict[str, object] | None = None
+    executive_audit: dict[str, object] | None = None
     ideas: list[WorkflowIdeaSchema] = Field(default_factory=list)
     selected_idea: WorkflowIdeaSchema | None = None
     hooks: list[WorkflowHookSchema] = Field(default_factory=list)

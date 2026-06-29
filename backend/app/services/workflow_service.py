@@ -6,6 +6,7 @@ from fastapi import HTTPException, status
 
 from app.models.workflow import WorkflowChannel, WorkflowState
 from app.schemas.content_brain_schema import ContentBrainRequest
+from app.intelligence import global_intelligence
 from app.schemas.workflow_schema import (
     WorkflowChannelCreate,
     WorkflowChooseHookRequest,
@@ -101,23 +102,42 @@ def create_channel(payload: WorkflowChannelCreate) -> WorkflowCreateChannelRespo
 
 def analyze_opportunity(payload: WorkflowStepRequest) -> WorkflowOpportunityResponse:
     workflow = _get(payload.workflow_id)
-    analysis = content_brain_service.analyze(_brain_request(workflow))
-    score = analysis.opportunity_score
+    brain_request = _brain_request(workflow)
+    audit = global_intelligence.analyze_global_opportunity(
+        topic=brain_request.topic,
+        country=brain_request.country,
+        language=brain_request.language,
+        niche=brain_request.niche,
+    )
+    workflow.executive_audit = audit
+    score = int(audit["opportunity_score"])
     workflow.opportunity = {
         "opportunity_score": score,
-        "competition": "Medium-low" if score >= 86 else "Medium",
-        "potential": "High" if score >= 82 else "Promising",
-        "trend": "Rising local demand with global relevance",
-        "monetization": "Strong SaaS, education and productivity fit",
+        "competition": audit["competition_analysis"]["competition_level"],
+        "potential": "Alto" if score >= 82 else "Prometedor",
+        "trend": audit["trend_analysis"]["trend_stage"],
+        "monetization": f"{audit['roi_dashboard']['monetization_probability']}% de probabilidad mock",
         "ideal_time": "13:00 local time" if workflow.channel.mode == "manual" else "08:00 and 21:00 local time",
-        "notes": analysis.research_summary.key_findings,
+        "notes": audit["trend_analysis"]["signals"],
     }
     _touch(workflow, "opportunity_analyzed")
-    return WorkflowOpportunityResponse(**_base(workflow), **workflow.opportunity)
+    return WorkflowOpportunityResponse(
+        **_base(workflow),
+        executive_decision=audit["executive_decision"],
+        **workflow.opportunity,
+    )
 
 
 def generate_ideas(payload: WorkflowStepRequest) -> WorkflowIdeasResponse:
     workflow = _get(payload.workflow_id)
+    if workflow.executive_audit is None:
+        analyze_opportunity(payload)
+    decision = workflow.executive_audit["executive_decision"] if workflow.executive_audit else {}
+    if decision.get("decision") != "PRODUCIR":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Director Ejecutivo IA decidio {decision.get('decision', 'VOLVER A ANALIZAR')}. No se generan ideas todavia.",
+        )
     analysis = content_brain_service.analyze(_brain_request(workflow))
     ideas: list[dict[str, object]] = []
     ranked_by_title = {item.title: item for item in analysis.ranking}
@@ -299,6 +319,7 @@ def get_state(workflow_id: str) -> WorkflowStateResponse:
         **_base(workflow),
         channel=_channel_response(workflow.channel),
         opportunity=workflow.opportunity,
+        executive_audit=workflow.executive_audit,
         ideas=workflow.ideas,
         selected_idea=workflow.selected_idea,
         hooks=workflow.hooks,

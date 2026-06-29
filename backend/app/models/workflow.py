@@ -21,6 +21,7 @@ class WorkflowState:
     id: str = field(default_factory=lambda: str(uuid4()))
     current_step: str = "channel_created"
     opportunity: dict[str, object] | None = None
+    executive_audit: dict[str, object] | None = None
     ideas: list[dict[str, object]] = field(default_factory=list)
     selected_idea: dict[str, object] | None = None
     hooks: list[dict[str, object]] = field(default_factory=list)

@@ -1,7 +1,19 @@
 ﻿from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import agents, channels, content, content_brain, editorial, health, opportunities, pipeline, projects, workflow
+from app.api.routes import (
+    agents,
+    channels,
+    content,
+    content_brain,
+    editorial,
+    global_intelligence,
+    health,
+    opportunities,
+    pipeline,
+    projects,
+    workflow,
+)
 from app.core.config import get_settings
 from app.database.init_db import init_database
 
@@ -32,6 +44,7 @@ app.include_router(opportunities.router, prefix=settings.api_prefix)
 app.include_router(editorial.router, prefix=settings.api_prefix)
 app.include_router(content.router, prefix=settings.api_prefix)
 app.include_router(content_brain.router, prefix=settings.api_prefix)
+app.include_router(global_intelligence.router, prefix=settings.api_prefix)
 app.include_router(workflow.router, prefix=settings.api_prefix)
 app.include_router(pipeline.router, prefix=settings.api_prefix)
 app.include_router(agents.router, prefix=settings.api_prefix)

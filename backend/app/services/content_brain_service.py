@@ -9,6 +9,7 @@ from app.schemas.content_brain_schema import (
     StoryboardSceneSchema,
 )
 from app.projects import project_library
+from app.intelligence import global_intelligence
 from app.services import (
     audience_service,
     hook_service,
@@ -29,6 +30,12 @@ def _source_context() -> tuple[str, str]:
 
 def analyze(payload: ContentBrainRequest) -> ContentBrainAnalysisResponse:
     source_mode, project_context = _source_context()
+    executive_audit = global_intelligence.analyze_global_opportunity(
+        topic=payload.topic,
+        country=payload.country,
+        language=payload.language,
+        niche=payload.niche,
+    )
     research = research_service.research_opportunity(payload)
     ideas = idea_generator_service.generate_ideas(research)
     ranking = idea_ranking_service.rank_ideas(ideas)
@@ -41,6 +48,7 @@ def analyze(payload: ContentBrainRequest) -> ContentBrainAnalysisResponse:
     return ContentBrainAnalysisResponse(
         source_mode=source_mode,
         project_context=project_context,
+        executive_decision=executive_audit["executive_decision"],
         opportunity_score=best_idea.score,
         research_summary=asdict(research),
         ideas=[asdict(idea) for idea in ideas],
@@ -60,6 +68,7 @@ def recommend(payload: ContentBrainRequest) -> ContentBrainRecommendationRespons
     return ContentBrainRecommendationResponse(
         source_mode=result.source_mode,
         project_context=result.project_context,
+        executive_decision=result.executive_decision,
         best_idea=best.title,
         why_this_idea_is_better=best.reason,
         target_emotion=strategy.emotional_goal,
