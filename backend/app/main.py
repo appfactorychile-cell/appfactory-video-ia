@@ -11,6 +11,7 @@ from app.api.routes import (
     health,
     opportunities,
     pipeline,
+    production,
     projects,
     workflow,
 )
@@ -47,6 +48,7 @@ app.include_router(content_brain.router, prefix=settings.api_prefix)
 app.include_router(global_intelligence.router, prefix=settings.api_prefix)
 app.include_router(workflow.router, prefix=settings.api_prefix)
 app.include_router(pipeline.router, prefix=settings.api_prefix)
+app.include_router(production.router, prefix=settings.api_prefix)
 app.include_router(agents.router, prefix=settings.api_prefix)
 app.include_router(projects.router, prefix=settings.api_prefix)
 
