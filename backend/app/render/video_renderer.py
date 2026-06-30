@@ -3,6 +3,9 @@ import subprocess
 from pathlib import Path
 
 from app.animation import animation_timeline, scene_composer
+from app.audio.audio_mixer import prepare_mix
+from app.audio.audio_timeline import build_audio_timeline
+from app.audio.audio_validator import validate_audio_mix
 from app.motion.motion_engine import motion_plan, scene_motion
 from app.render.ffmpeg_manager import detect_ffmpeg
 
@@ -53,6 +56,39 @@ def _probe_duration(ffmpeg_path: str, video_path: Path) -> float:
         return round(float(payload.get("format", {}).get("duration", 0)), 2)
     except (TypeError, ValueError, json.JSONDecodeError):
         return 0.0
+
+
+def _probe_streams(ffmpeg_path: str, video_path: Path) -> dict[str, object]:
+    ffprobe = Path(ffmpeg_path).with_name("ffprobe.exe")
+    if not ffprobe.exists():
+        return {"video_stream": False, "audio_stream": False, "streams": []}
+    result = subprocess.run(
+        [
+            str(ffprobe),
+            "-v",
+            "error",
+            "-show_entries",
+            "stream=codec_type,codec_name,width,height",
+            "-of",
+            "json",
+            str(video_path),
+        ],
+        capture_output=True,
+        text=True,
+        timeout=12,
+        check=False,
+    )
+    if result.returncode != 0:
+        return {"video_stream": False, "audio_stream": False, "streams": []}
+    try:
+        streams = json.loads(result.stdout).get("streams", [])
+    except json.JSONDecodeError:
+        streams = []
+    return {
+        "video_stream": any(stream.get("codec_type") == "video" for stream in streams),
+        "audio_stream": any(stream.get("codec_type") == "audio" for stream in streams),
+        "streams": streams,
+    }
 
 
 def _scene_filter(scene: dict[str, object], index: int) -> str:
@@ -141,8 +177,27 @@ def render_test_video() -> dict[str, object]:
         TEMP_OUTPUT_FILE.unlink()
     ffmpeg_path = str(ffmpeg["path"])
     motion = motion_plan(len(render_scenes))
+    audio_timeline = build_audio_timeline(
+        {
+            "duration_seconds": len(render_scenes) * 3,
+            "scene_count": len(render_scenes),
+            "music_style": "tecnologia",
+            "effects": ["whoosh", "pop", "transition", "soft-hit"],
+        }
+    )
+    audio_mix = prepare_mix({"audio_timeline": audio_timeline})
     filter_parts = [_scene_filter(scene, index) for index, scene in enumerate(render_scenes)]
     filter_parts.append("".join(f"[v{index}]" for index in range(len(render_scenes))) + f"concat=n={len(render_scenes)}:v=1:a=0,format=yuv420p[outv]")
+    audio_duration = len(render_scenes) * 3
+    audio_filter = (
+        f"aevalsrc='0.028*sin(2*PI*220*t)+0.018*sin(2*PI*440*t)+"
+        f"if(lt(mod(t\\,3)\\,0.12)\\,0.12*sin(2*PI*880*t)\\,0)'"
+        f":s=44100:d={audio_duration},"
+        "afade=t=in:st=0:d=0.8,"
+        f"afade=t=out:st={max(audio_duration - 1, 0)}:d=1,"
+        "volume=0.7[aout]"
+    )
+    filter_parts.append(audio_filter)
     command = [
         ffmpeg_path,
         "-y",
@@ -150,8 +205,15 @@ def render_test_video() -> dict[str, object]:
         ";".join(filter_parts),
         "-map",
         "[outv]",
+        "-map",
+        "[aout]",
         "-r",
         "30",
+        "-c:a",
+        "aac",
+        "-b:a",
+        "128k",
+        "-shortest",
         "-movflags",
         "+faststart",
         str(TEMP_OUTPUT_FILE),
@@ -172,9 +234,11 @@ def render_test_video() -> dict[str, object]:
         OUTPUT_FILE.unlink()
     TEMP_OUTPUT_FILE.replace(OUTPUT_FILE)
     duration = _probe_duration(ffmpeg_path, OUTPUT_FILE)
+    streams = _probe_streams(ffmpeg_path, OUTPUT_FILE)
+    audio_validation = validate_audio_mix(audio_mix, duration)
     return {
         "status": "rendered",
-        "message": "Primer MP4 generado correctamente",
+        "message": "Primer MP4 generado correctamente con pista de audio mock",
         "path": str(OUTPUT_FILE),
         "duration_seconds": duration,
         "size_bytes": OUTPUT_FILE.stat().st_size,
@@ -183,4 +247,10 @@ def render_test_video() -> dict[str, object]:
         "resolution": "720x1280",
         "timeline_id": timeline.get("timeline_id"),
         "motion_graphics": motion,
+        "audio": {
+            "audio_stream": streams["audio_stream"],
+            "video_stream": streams["video_stream"],
+            "mix": audio_mix,
+            "validation": audio_validation,
+        },
     }

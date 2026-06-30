@@ -51,6 +51,8 @@ class QualityReport:
     assets_defined: bool
     subtitles_prepared: bool
     music_selected: bool
+    effects_assigned: bool
+    audio_mix_valid: bool
     render_ready: bool
     quality_score: int
     approved: bool
@@ -82,4 +84,3 @@ class ProductionJob:
     learning_feedback: dict[str, object] = field(default_factory=dict)
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
-
