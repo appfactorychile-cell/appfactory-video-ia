@@ -6,12 +6,14 @@ from app.api.routes import (
     agents,
     animation,
     channels,
+    characters,
     content,
     content_brain,
     editorial,
     global_intelligence,
     health,
     image_video,
+    narration,
     opportunities,
     pipeline,
     production,
@@ -46,6 +48,7 @@ app.add_middleware(
 app.include_router(health.router)
 app.include_router(ai.router, prefix=settings.api_prefix)
 app.include_router(animation.router, prefix=settings.api_prefix)
+app.include_router(characters.router, prefix=settings.api_prefix)
 app.include_router(channels.router, prefix=settings.api_prefix)
 app.include_router(opportunities.router, prefix=settings.api_prefix)
 app.include_router(editorial.router, prefix=settings.api_prefix)
@@ -53,6 +56,7 @@ app.include_router(content.router, prefix=settings.api_prefix)
 app.include_router(content_brain.router, prefix=settings.api_prefix)
 app.include_router(global_intelligence.router, prefix=settings.api_prefix)
 app.include_router(image_video.router, prefix=settings.api_prefix)
+app.include_router(narration.router, prefix=settings.api_prefix)
 app.include_router(workflow.router, prefix=settings.api_prefix)
 app.include_router(pipeline.router, prefix=settings.api_prefix)
 app.include_router(production.router, prefix=settings.api_prefix)

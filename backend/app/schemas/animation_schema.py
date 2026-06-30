@@ -90,6 +90,9 @@ class SceneComposeRequest(BaseModel):
     subtitle: str = Field("La oportunidad aparece antes que el video.")
     duration_seconds: int = Field(10, ge=3, le=30)
     character: str = Field("Narrador 2D")
+    character_id: str = Field("narrador-hombre")
+    expression: str = Field("Feliz")
+    character_animation: str = Field("Hablar")
     tone: str = Field("premium")
 
 
@@ -103,7 +106,10 @@ class SceneCompositionResponse(BaseModel):
     title: str
     main_text: str
     subtitle: str
-    duration_seconds: int
+    duration_seconds: float
+    narration: dict[str, object]
+    subtitle_plan: dict[str, object]
+    speech_track: dict[str, object]
     background: dict[str, object]
     character: dict[str, object]
     icons: list[dict[str, object]]
@@ -118,6 +124,7 @@ class VideoScenesCompositionResponse(BaseModel):
     status: str
     scene_count: int
     scenes: list[SceneCompositionResponse]
+    narration_plan: dict[str, object] | None = None
 
 
 class AnimationTimelineBuildRequest(BaseModel):
@@ -128,9 +135,9 @@ class AnimationTimelineBuildRequest(BaseModel):
 class AnimationTimelineSceneResponse(BaseModel):
     scene_id: str
     title: str
-    start_time: int
-    end_time: int
-    duration_seconds: int
+    start_time: float
+    end_time: float
+    duration_seconds: float
     layers: list[dict[str, object]]
     keyframes: list[dict[str, object]]
     entry_animation: str
@@ -139,14 +146,18 @@ class AnimationTimelineSceneResponse(BaseModel):
     pan: dict[str, object]
     transition: dict[str, object]
     subtitles: list[dict[str, object]]
+    narration: dict[str, object]
+    subtitle_plan: dict[str, object]
+    speech_track: dict[str, object]
     camera_events: list[dict[str, object]]
     text_events: list[dict[str, object]]
+    character_track: dict[str, object]
 
 
 class AnimationTimelineBuildResponse(BaseModel):
     timeline_id: str
     status: str
-    total_duration_seconds: int
+    total_duration_seconds: float
     scene_count: int
     scenes: list[AnimationTimelineSceneResponse]
     global_transitions: list[dict[str, object]]

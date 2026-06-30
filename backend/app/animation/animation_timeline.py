@@ -6,7 +6,7 @@ from app.animation import scene_composer
 TIMELINE_STORE: dict[str, dict[str, object]] = {}
 
 
-def _keyframes(scene_index: int, layer: dict[str, object], scene_start: int, scene_end: int) -> list[dict[str, object]]:
+def _keyframes(scene_index: int, layer: dict[str, object], scene_start: float, scene_end: float) -> list[dict[str, object]]:
     layer_type = str(layer.get("type") or "layer")
     return [
         {
@@ -44,10 +44,17 @@ def _keyframes(scene_index: int, layer: dict[str, object], scene_start: int, sce
     ]
 
 
-def _timeline_scene(scene: dict[str, object], index: int, start_time: int) -> dict[str, object]:
-    duration = int(scene.get("duration_seconds") or 10)
-    end_time = start_time + duration
+def _timeline_scene(scene: dict[str, object], index: int, start_time: float) -> dict[str, object]:
+    duration = round(float(scene.get("duration_seconds") or 10), 2)
+    end_time = round(start_time + duration, 2)
     layers = scene.get("layers") if isinstance(scene.get("layers"), list) else []
+    character = scene.get("character") if isinstance(scene.get("character"), dict) else {}
+    narration = scene.get("narration") if isinstance(scene.get("narration"), dict) else {}
+    subtitle_plan = scene.get("subtitle_plan") if isinstance(scene.get("subtitle_plan"), dict) else {}
+    speech_track = scene.get("speech_track") if isinstance(scene.get("speech_track"), dict) else {}
+    lip_sync = character.get("lip_sync") if isinstance(character.get("lip_sync"), dict) else {}
+    speech_start = float(lip_sync.get("inicio", speech_track.get("start", start_time)))
+    speech_end = float(lip_sync.get("fin", speech_track.get("end", end_time)))
     keyframes = []
     for layer in layers:
         if isinstance(layer, dict):
@@ -70,18 +77,46 @@ def _timeline_scene(scene: dict[str, object], index: int, start_time: int) -> di
             "starts_at": max(start_time, end_time - 1),
         },
         "subtitles": [
-            {"time": start_time + 1, "text": scene.get("subtitle") or "Subtitulo sincronizado"},
-            {"time": max(start_time + 2, end_time - 3), "text": scene.get("main_text") or "Texto principal"},
+            {"time": round(start_time + 0.35, 2), "text": scene.get("subtitle") or "Subtitulo sincronizado"},
+            {"time": round(max(start_time + 1, end_time - 1.2), 2), "text": scene.get("main_text") or "Texto principal"},
         ],
+        "narration": narration,
+        "subtitle_plan": subtitle_plan,
+        "speech_track": {
+            **speech_track,
+            "start": speech_track.get("start", speech_start),
+            "end": speech_track.get("end", speech_end),
+            "duration": speech_track.get("duration", duration),
+        },
         "camera_events": [
             {"time": start_time, "event": "camera_start", "description": "Plano vertical completo 9:16"},
-            {"time": start_time + duration // 2, "event": "camera_zoom", "description": "Zoom lento hacia texto principal"},
+            {"time": round(start_time + duration / 2, 2), "event": "camera_zoom", "description": "Zoom lento hacia texto principal"},
             {"time": end_time, "event": "camera_cut", "description": "Preparar transicion a siguiente escena"},
         ],
         "text_events": [
             {"time": start_time + 1, "event": "title_reveal", "description": "Aparece titulo principal"},
             {"time": start_time + 3, "event": "caption_pop", "description": "Aparece subtitulo inferior"},
         ],
+        "character_track": {
+            "character_id": character.get("id", "narrador-hombre"),
+            "name": character.get("name", "Narrador Hombre"),
+            "expression": character.get("expression", "Feliz"),
+            "pose": character.get("pose", "Explicando"),
+            "animation": character.get("animation", "Hablar"),
+            "lip_sync": lip_sync or {
+                "inicio": start_time,
+                "fin": end_time,
+                "duracion": duration,
+                "estado": "planificado_sin_voz",
+                "source": "speech_timeline",
+            },
+            "keyframes": [
+                {"time": round(speech_start, 2), "event": "Entrada personaje", "value": 0},
+                {"time": round(speech_start + 0.45, 2), "event": "Hablar", "value": character.get("pose", "Explicando")},
+                {"time": round(max(speech_start + 1, speech_end - 1), 2), "event": "Respirar", "value": 1.03},
+                {"time": round(speech_end, 2), "event": "Salida personaje", "value": 0},
+            ],
+        },
     }
 
 
@@ -91,13 +126,14 @@ def build_timeline(payload: dict[str, object]) -> dict[str, object]:
     if not isinstance(scenes, list) or not scenes:
         scenes = scene_composer.compose_video_scenes({}).get("scenes", [])
     timeline_scenes = []
-    cursor = 0
+    cursor = 0.0
     for index, scene in enumerate(scenes):
         if not isinstance(scene, dict):
             continue
         item = _timeline_scene(scene, index, cursor)
         timeline_scenes.append(item)
-        cursor = int(item["end_time"])
+        track = item.get("speech_track") if isinstance(item.get("speech_track"), dict) else {}
+        cursor = float(track.get("end", item["end_time"]))
     timeline = {
         "timeline_id": timeline_id,
         "status": "Timeline animado preparado",
