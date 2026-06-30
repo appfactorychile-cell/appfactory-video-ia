@@ -3,6 +3,7 @@ import subprocess
 from pathlib import Path
 
 from app.animation import animation_timeline, scene_composer
+from app.motion.motion_engine import motion_plan, scene_motion
 from app.render.ffmpeg_manager import detect_ffmpeg
 
 
@@ -63,18 +64,34 @@ def _scene_filter(scene: dict[str, object], index: int) -> str:
     accent = accent_colors[index % len(accent_colors)]
     font = str(FONT_FILE).replace("\\", "/").replace(":", "\\:")
     duration = 3
+    motion = scene_motion(index)
+    layout = motion["layout"]["positions"]
+    camera_filter = motion["camera"]["ffmpeg_filter"]
+    transition = _escape_drawtext(motion["transition"]["name"])
+    text_motion = _escape_drawtext(motion["animation"]["texto"])
+    title_y = int(layout["title_y"])
+    main_y = int(layout["main_y"])
+    subtitle_y = int(layout["subtitle_y"])
     return (
         f"color=c={color}:s=720x1280:d={duration},format=yuv420p,"
-        f"drawbox=x='mod(t*110+{index * 90},760)-40':y=120:w=210:h=210:color={accent}@0.23:t=fill,"
-        f"drawbox=x=70:y=150:w=580:h=760:color=white@0.07:t=fill,"
-        f"drawbox=x=90:y=170:w=540:h=720:color={accent}@0.11:t=4,"
+        f"drawgrid=width=60:height=60:thickness=1:color=white@0.045,"
+        f"drawbox=x='mod(t*155+{index * 110},820)-80':y='120+18*sin(t*2)':w=230:h=230:color={accent}@0.20:t=fill,"
+        f"drawbox=x='620-mod(t*92+{index * 70},760)':y=760:w=160:h=160:color=white@0.08:t=fill,"
+        f"drawbox=x=42:y=138:w=636:h=790:color=white@0.055:t=fill,"
+        f"drawbox=x=62:y=156:w=596:h=752:color={accent}@0.12:t=4,"
+        f"drawbox=x='70+18*sin(t*3)':y=950:w=120:h=6:color={accent}@0.82:t=fill,"
+        f"drawbox=x='500+10*cos(t*4)':y=210:w=92:h=92:color=white@0.10:t=fill,"
+        f"drawbox=x=600:y='580+24*sin(t*1.6)':w=38:h=38:color={accent}@0.7:t=fill,"
         f"drawtext=fontfile='{font}':text='APP FACTORY VIDEO IA':x=70:y=62:fontsize=30:fontcolor=0x8bd3ff,"
-        f"drawtext=fontfile='{font}':text='ESCENA {index + 1:02d}':x=70:y=112:fontsize=26:fontcolor=ffffff@0.78,"
-        f"drawtext=fontfile='{font}':text='{title}':x=70:y=250:fontsize=54:fontcolor=ffffff:line_spacing=10:box=1:boxcolor=black@0.10:boxborderw=12,"
-        f"drawtext=fontfile='{font}':text='{main_text}':x=78:y=560:fontsize=38:fontcolor=e8f3ff:line_spacing=8:box=1:boxcolor=black@0.16:boxborderw=16,"
-        f"drawbox=x=60:y=1052:w=600:h=122:color=black@0.43:t=fill,"
-        f"drawtext=fontfile='{font}':text='{subtitle}':x=82:y=1082:fontsize=30:fontcolor=ffffff:line_spacing=6,"
-        f"fade=t=in:st=0:d=0.35,fade=t=out:st=2.65:d=0.35,"
+        f"drawtext=fontfile='{font}':text='MOTION GRAPHICS · {transition}':x=70:y=112:fontsize=25:fontcolor=ffffff@0.78,"
+        f"drawtext=fontfile='{font}':text='{title}':x='70+18*max(0\\,1-t*3)':y='{title_y}-16*max(0\\,1-t*2)':fontsize=56:fontcolor=ffffff:line_spacing=10:box=1:boxcolor=black@0.10:boxborderw=12,"
+        f"drawbox=x=70:y={main_y - 26}:w='560*min(1\\,t*1.2)':h=8:color={accent}@0.86:t=fill,"
+        f"drawtext=fontfile='{font}':text='{main_text}':x=78:y='{main_y}+10*sin(t*2)':fontsize=39:fontcolor=e8f3ff:line_spacing=8:box=1:boxcolor=black@0.18:boxborderw=16,"
+        f"drawtext=fontfile='{font}':text='{text_motion}':x=78:y={main_y + 154}:fontsize=24:fontcolor=0xbfdbfe@0.86,"
+        f"drawbox=x=54:y=1046:w=612:h=128:color=black@0.52:t=fill,"
+        f"drawtext=fontfile='{font}':text='{subtitle}':x=82:y={subtitle_y}:fontsize=30:fontcolor=ffffff:line_spacing=6,"
+        f"{camera_filter},setsar=1,"
+        f"fade=t=in:st=0:d=0.28,fade=t=out:st=2.72:d=0.28,"
         f"setpts=PTS-STARTPTS[v{index}]"
     )
 
@@ -99,6 +116,7 @@ def render_test_video() -> dict[str, object]:
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     ffmpeg_path = str(ffmpeg["path"])
+    motion = motion_plan(len(render_scenes))
     filter_parts = [_scene_filter(scene, index) for index, scene in enumerate(render_scenes)]
     filter_parts.append("".join(f"[v{index}]" for index in range(len(render_scenes))) + f"concat=n={len(render_scenes)}:v=1:a=0,format=yuv420p[outv]")
     command = [
@@ -137,4 +155,5 @@ def render_test_video() -> dict[str, object]:
         "aspect_ratio": "9:16",
         "resolution": "720x1280",
         "timeline_id": timeline.get("timeline_id"),
+        "motion_graphics": motion,
     }

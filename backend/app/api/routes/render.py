@@ -1,5 +1,6 @@
 from fastapi import APIRouter
 
+from app.motion.motion_engine import motion_plan
 from app.render.ffmpeg_manager import detect_ffmpeg
 from app.render.video_renderer import render_test_video
 
@@ -14,3 +15,8 @@ def render_status() -> dict[str, object]:
 @router.post("/test-video", summary="Generate First Test MP4")
 def test_video() -> dict[str, object]:
     return render_test_video()
+
+
+@router.get("/motion-graphics", summary="Motion Graphics Plan")
+def motion_graphics() -> dict[str, object]:
+    return motion_plan()

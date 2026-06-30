@@ -11,6 +11,7 @@ from app.api.routes import (
     editorial,
     global_intelligence,
     health,
+    image_video,
     opportunities,
     pipeline,
     production,
@@ -51,6 +52,7 @@ app.include_router(editorial.router, prefix=settings.api_prefix)
 app.include_router(content.router, prefix=settings.api_prefix)
 app.include_router(content_brain.router, prefix=settings.api_prefix)
 app.include_router(global_intelligence.router, prefix=settings.api_prefix)
+app.include_router(image_video.router, prefix=settings.api_prefix)
 app.include_router(workflow.router, prefix=settings.api_prefix)
 app.include_router(pipeline.router, prefix=settings.api_prefix)
 app.include_router(production.router, prefix=settings.api_prefix)
